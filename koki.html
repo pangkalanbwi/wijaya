@@ -8,55 +8,227 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .order-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .order-card:hover { transform: translateY(-4px); }
+        .status-urgent { border-left: 8px solid #ef4444; }
+        .status-normal { border-left: 8px solid #84cc16; }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow { animation: pulse-slow 3s infinite; }
     </style>
 </head>
-<body class="p-6 text-white">
+<body class="antialiased min-h-screen pb-10">
 
-    <header class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-black">Dapur Pangkalan</h1>
-            <p class="text-slate-400 text-sm">Monitor Pesanan Pelanggan</p>
-        </div>
+    <!-- Header -->
+    <header class="p-6 bg-slate-900/50 backdrop-blur-xl border-b border-slate-800 sticky top-0 z-50 flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <span class="flex items-center gap-2 text-xs font-bold bg-lime-500/20 text-lime-400 px-4 py-2 rounded-full">
-                <span class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span> ONLINE
-            </span>
-            <a href="absensi.html" class="text-slate-400"><i data-lucide="log-out"></i></a>
+            <div class="w-12 h-12 bg-lime-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-lime-900/20">
+                <i data-lucide="chef-hat" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight">KITCHEN MONITOR</h1>
+                <p class="text-[10px] font-bold text-lime-500 uppercase tracking-widest flex items-center gap-2">
+                    <span class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span> Sistem Aktif - RM Pangkalan
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+                <button onclick="setFilter('SEMUA')" id="filter-all" class="px-4 py-2 text-[10px] font-black rounded-lg bg-lime-600 text-white transition-all">SEMUA</button>
+                <button onclick="setFilter('PENDING')" id="filter-pending" class="px-4 py-2 text-[10px] font-black rounded-lg text-slate-400 hover:text-white transition-all">PENDING</button>
+            </div>
+            <button onclick="syncOrders()" class="p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+            </button>
         </div>
     </header>
 
-    <div id="kitchen-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Order Card -->
-        <div class="bg-slate-800 rounded-[32px] overflow-hidden border border-slate-700 shadow-2xl">
-            <div class="p-6 bg-orange-500 flex justify-between items-center text-white">
-                <span class="font-black text-xl">MEJA 08</span>
-                <span class="text-xs font-bold">12 Menit Lalu</span>
+    <main class="p-6">
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Pesanan</span>
+                <h4 class="text-2xl font-black text-white" id="stat-total">0</h4>
             </div>
-            <div class="p-6">
-                <ul class="space-y-4 mb-8">
-                    <li class="flex justify-between items-start border-b border-slate-700/50 pb-3">
-                        <div class="flex-1">
-                            <p class="font-black text-lg">2x Ayam Bakar Pangkalan</p>
-                            <p class="text-xs text-orange-400 font-bold italic">- Sambal pisah, Nasi setengah</p>
-                        </div>
-                    </li>
-                    <li class="flex justify-between items-start border-b border-slate-700/50 pb-3">
-                        <div class="flex-1">
-                            <p class="font-black text-lg text-slate-300 line-through">1x Es Teh Manis</p>
-                            <p class="text-[10px] text-lime-400 font-bold uppercase">Selesai</p>
-                        </div>
-                    </li>
-                </ul>
-                <button class="w-full py-4 bg-lime-600 hover:bg-lime-700 text-white rounded-2xl font-black transition">
-                    SELESAI MASAK
-                </button>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dalam Proses</span>
+                <h4 class="text-2xl font-black text-orange-500" id="stat-process">0</h4>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Rata-rata Waktu</span>
+                <h4 class="text-2xl font-black text-blue-400">12<small class="text-xs ml-1 font-bold uppercase">Min</small></h4>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col items-center">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Selesai</span>
+                <h4 class="text-2xl font-black text-lime-500">0</h4>
             </div>
         </div>
 
-        <!-- Add more cards dynamically -->
-    </div>
+        <!-- Orders Grid -->
+        <div id="orders-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Order cards will be injected here -->
+        </div>
 
-    <script>lucide.createIcons();</script>
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden py-40 flex flex-col items-center text-center">
+            <div class="w-24 h-24 bg-slate-900 rounded-full flex items-center justify-center text-slate-700 mb-6 border border-slate-800">
+                <i data-lucide="utensils" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-400">Belum Ada Pesanan Baru</h3>
+            <p class="text-slate-600 text-sm mt-2">Dapur dalam kondisi santai. Tetap semangat!</p>
+        </div>
+    </main>
+
+    <script>
+        // Mock Data (Nantinya difetch dari GAS_URL)
+        let orders = [
+            {
+                id: "ORD-001",
+                table: "05",
+                waiter: "Budi",
+                time: new Date(Date.now() - 1000 * 60 * 15), // 15 mins ago
+                status: "PENDING",
+                items: [
+                    { name: "Ayam Goreng Pangkalan", qty: 2, note: "Sambal banyakin" },
+                    { name: "Cah Kangkung Terasi", qty: 1, note: "" }
+                ]
+            },
+            {
+                id: "ORD-002",
+                table: "VIP1",
+                waiter: "Siti",
+                time: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
+                status: "PROCESSING",
+                items: [
+                    { name: "Ikan Bakar Madu", qty: 1, note: "Gak pake lama" },
+                    { name: "Es Jeruk Kelapa", qty: 4, note: "Es dipisah" }
+                ]
+            }
+        ];
+
+        let currentFilter = 'SEMUA';
+
+        function init() {
+            renderOrders();
+            lucide.createIcons();
+            
+            // Auto update timer every minute
+            setInterval(renderOrders, 60000);
+        }
+
+        function renderOrders() {
+            const grid = document.getElementById('orders-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            const filtered = orders.filter(o => {
+                if (currentFilter === 'SEMUA') return o.status !== 'DONE';
+                return o.status === currentFilter;
+            });
+
+            // Update Stats
+            document.getElementById('stat-total').innerText = orders.filter(o => o.status !== 'DONE').length;
+            document.getElementById('stat-process').innerText = orders.filter(o => o.status === 'PROCESSING').length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(order => {
+                const diffMin = Math.floor((new Date() - order.time) / 60000);
+                const isUrgent = diffMin > 10;
+                
+                return `
+                    <div class="order-card bg-slate-900 rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl ${isUrgent ? 'status-urgent' : 'status-normal animate-in fade-in duration-500'}">
+                        <div class="p-6 border-b border-slate-800/50 flex justify-between items-start">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Meja ${order.table}</p>
+                                <h3 class="text-xl font-black text-white">${order.id}</h3>
+                                <p class="text-[8px] font-bold text-slate-500 mt-1 uppercase">Waiter: ${order.waiter}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-3 py-1 ${isUrgent ? 'bg-red-500/10 text-red-500' : 'bg-lime-500/10 text-lime-500'} rounded-lg text-[10px] font-black">
+                                    ${diffMin} MIN LALU
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <ul class="space-y-4 mb-8">
+                                ${order.items.map(item => `
+                                    <li class="flex gap-4">
+                                        <div class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center font-black text-lime-500 text-xs shrink-0">${item.qty}x</div>
+                                        <div class="flex-1">
+                                            <p class="font-bold text-sm text-slate-200">${item.name}</p>
+                                            ${item.note ? `<p class="text-[10px] text-orange-400 font-bold italic mt-1 flex items-center gap-1"><i data-lucide="message-square" class="w-2.5 h-2.5"></i> ${item.note}</p>` : ''}
+                                        </div>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                            
+                            <div class="flex gap-2">
+                                ${order.status === 'PENDING' ? `
+                                    <button onclick="updateStatus('${order.id}', 'PROCESSING')" class="flex-1 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-xs transition-all active:scale-95">PROSES</button>
+                                ` : `
+                                    <button onclick="updateStatus('${order.id}', 'DONE')" class="flex-1 py-4 bg-lime-600 hover:bg-lime-700 text-white rounded-2xl font-black text-xs transition-all shadow-lg shadow-lime-900/20 active:scale-95 uppercase tracking-widest">Selesai Masak</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            
+            // Update UI buttons
+            const btnAll = document.getElementById('filter-all');
+            const btnPending = document.getElementById('filter-pending');
+            
+            if (filter === 'SEMUA') {
+                btnAll.className = "px-4 py-2 text-[10px] font-black rounded-lg bg-lime-600 text-white transition-all";
+                btnPending.className = "px-4 py-2 text-[10px] font-black rounded-lg text-slate-400 hover:text-white transition-all";
+            } else {
+                btnPending.className = "px-4 py-2 text-[10px] font-black rounded-lg bg-lime-600 text-white transition-all";
+                btnAll.className = "px-4 py-2 text-[10px] font-black rounded-lg text-slate-400 hover:text-white transition-all";
+            }
+            
+            renderOrders();
+        }
+
+        function updateStatus(id, newStatus) {
+            const orderIndex = orders.findIndex(o => o.id === id);
+            if (orderIndex > -1) {
+                orders[orderIndex].status = newStatus;
+                renderOrders();
+                
+                // Nantinya di sini kirim update ke Google Sheet
+                console.log(`Update ${id} to ${newStatus}`);
+            }
+        }
+
+        async function syncOrders() {
+            const btn = document.querySelector('header button i');
+            btn.classList.add('animate-spin');
+            
+            // Simulasi fetch dari GAS
+            setTimeout(() => {
+                btn.classList.remove('animate-spin');
+                renderOrders();
+            }, 1000);
+        }
+
+        init();
+    </script>
 </body>
 </html>
