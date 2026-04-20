@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiters - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfc; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .category-pill-active { background-color: #65a30d; color: white; border-color: #65a30d; }
+        .table-active { border-color: #65a30d; color: #65a30d; background-color: #f7fee7; }
+        .floating-cart { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="antialiased text-slate-800 pb-32">
+
+    <!-- Header -->
+    <header class="p-4 md:p-6 bg-white/80 backdrop-blur-md border-b sticky top-0 z-40 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-lime-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-lime-200">
+                <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-slate-900 leading-tight text-sm md:text-base">WAITERS AREA</h1>
+                <p class="text-[10px] font-bold text-lime-600 uppercase tracking-widest">Pangkalan Natural</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="hidden md:block bg-slate-100 px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 border border-slate-200">
+                MEJA: <span id="header-table" class="text-lime-600">BELUM DIPILIH</span>
+            </div>
+            <a href="absensi.html" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full border text-slate-400 hover:text-lime-600 transition">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+            </a>
+        </div>
+    </header>
+
+    <main class="p-4 md:p-6 max-w-5xl mx-auto">
+        <!-- Table Selector -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pilih Nomor Meja</p>
+                <span id="selected-table-badge" class="text-[10px] bg-lime-100 text-lime-700 px-2 py-1 rounded font-bold hidden">TERPILIH</span>
+            </div>
+            <div id="table-container" class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                <!-- Diisi via JS -->
+            </div>
+        </div>
+
+        <!-- Menu Categories -->
+        <div class="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
+            <button class="category-pill-active px-6 py-2.5 rounded-2xl text-[10px] font-black shadow-lg shadow-lime-100 border transition-all">SEMUA</button>
+            <button class="bg-white border px-6 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 hover:border-lime-200 transition-all">MAKANAN</button>
+            <button class="bg-white border px-6 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 hover:border-lime-200 transition-all">MINUMAN</button>
+            <button class="bg-white border px-6 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 hover:border-lime-200 transition-all">CAMILAN</button>
+        </div>
+
+        <!-- Menu Grid -->
+        <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Diisi via JS -->
+        </div>
+    </main>
+
+    <!-- Bottom Action Bar -->
+    <div id="action-bar" class="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[400px] z-50 floating-cart translate-y-32 opacity-0">
+        <button onclick="sendOrder()" class="w-full bg-slate-900 hover:bg-lime-600 p-2 rounded-[28px] shadow-2xl transition-all duration-500 group">
+            <div class="flex items-center justify-between pl-6 pr-2 py-2">
+                <div class="text-left">
+                    <p class="text-[10px] font-bold text-slate-400 group-hover:text-white/60 uppercase tracking-widest">Simpan Pesanan</p>
+                    <h4 class="text-white font-black flex items-center gap-2">
+                        <span id="cart-count">0</span> Pesanan <span class="text-slate-500 group-hover:text-white/40">|</span> <span id="cart-total">Rp 0</span>
+                    </h4>
+                </div>
+                <div class="w-14 h-14 bg-lime-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-white group-hover:text-lime-600 transition-all">
+                    <i data-lucide="send" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </button>
+    </div>
+
+    <script>
+        // Data Dummy (Nantinya difetch dari Google Sheets)
+        const APP_DATA = {
+            tables: [1, 2, 3, 4, 5, 6, 7, 8, 'VIP1', 'VIP2'],
+            menus: [
+                { id: 1, name: 'Ayam Goreng Pangkalan', price: 25000, category: 'MAKANAN', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300' },
+                { id: 2, name: 'Es Jeruk Nipis Segar', price: 8000, category: 'MINUMAN', img: 'https://images.unsplash.com/photo-1544145945-f904253db0ad?auto=format&fit=crop&q=80&w=300' },
+                { id: 3, name: 'Cah Kangkung Terasi', price: 15000, category: 'MAKANAN', img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=300' },
+                { id: 4, name: 'Pisang Goreng Keju', price: 12000, category: 'CAMILAN', img: 'https://images.unsplash.com/photo-1590004953392-5aba2e785943?auto=format&fit=crop&q=80&w=300' }
+            ]
+        };
+
+        // State Management
+        let state = {
+            selectedTable: null,
+            cart: {} // { menuId: qty }
+        };
+
+        // Initialize UI
+        function init() {
+            renderTables();
+            renderMenus();
+            lucide.createIcons();
+        }
+
+        function renderTables() {
+            const container = document.getElementById('table-container');
+            container.innerHTML = APP_DATA.tables.map(t => `
+                <button onclick="setTable('${t}')" id="table-${t}" class="min-w-[70px] h-[70px] bg-white border-2 border-slate-100 rounded-[22px] font-black text-slate-400 hover:border-lime-200 transition-all flex items-center justify-center text-sm">
+                    ${t}
+                </button>
+            `).join('');
+        }
+
+        function renderMenus() {
+            const container = document.getElementById('menu-grid');
+            container.innerHTML = APP_DATA.menus.map(menu => `
+                <div class="bg-white p-3 rounded-[32px] border border-slate-100 shadow-sm flex flex-col hover:shadow-md transition-all group">
+                    <div class="aspect-square bg-slate-50 rounded-[24px] mb-4 overflow-hidden relative">
+                        <img src="${menu.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-[8px] font-black text-slate-500 border border-white">
+                            ${menu.category}
+                        </div>
+                    </div>
+                    <div class="px-1 flex-1">
+                        <h4 class="font-bold text-[11px] md:text-xs text-slate-800 leading-tight mb-1">${menu.name}</h4>
+                        <p class="text-lime-600 font-black text-sm">Rp ${menu.price.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between bg-slate-50 p-1.5 rounded-2xl">
+                        <button onclick="updateQty(${menu.id}, -1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">-</button>
+                        <span id="qty-${menu.id}" class="text-xs font-black text-slate-700">0</span>
+                        <button onclick="updateQty(${menu.id}, 1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-lime-600 shadow-sm hover:bg-lime-500 hover:text-white transition-all">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setTable(t) {
+            state.selectedTable = t;
+            // Reset UI Tables
+            document.querySelectorAll('#table-container button').forEach(btn => {
+                btn.classList.remove('table-active', 'border-lime-500', 'text-lime-600');
+            });
+            // Set Active UI
+            const activeBtn = document.getElementById(`table-${t}`);
+            activeBtn.classList.add('table-active', 'border-lime-500', 'text-lime-600');
+            
+            document.getElementById('header-table').innerText = `MEJA ${t}`;
+            document.getElementById('selected-table-badge').classList.remove('hidden');
+        }
+
+        function updateQty(id, delta) {
+            if (!state.cart[id]) state.cart[id] = 0;
+            state.cart[id] = Math.max(0, state.cart[id] + delta);
+            
+            // Update UI Qty
+            document.getElementById(`qty-${id}`).innerText = state.cart[id];
+            
+            updateActionBar();
+        }
+
+        function updateActionBar() {
+            const bar = document.getElementById('action-bar');
+            let totalItems = 0;
+            let totalPrice = 0;
+
+            Object.entries(state.cart).forEach(([id, qty]) => {
+                if (qty > 0) {
+                    const menu = APP_DATA.menus.find(m => m.id == id);
+                    totalItems += qty;
+                    totalPrice += (qty * menu.price);
+                }
+            });
+
+            document.getElementById('cart-count').innerText = totalItems;
+            document.getElementById('cart-total').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+
+            if (totalItems > 0) {
+                bar.classList.remove('translate-y-32', 'opacity-0');
+            } else {
+                bar.classList.add('translate-y-32', 'opacity-0');
+            }
+        }
+
+        function sendOrder() {
+            if (!state.selectedTable) {
+                alert("Mohon pilih nomor meja terlebih dahulu!");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Integrasi ke backend (G-Sheet) akan ditaruh di sini
+            const orderData = {
+                table: state.selectedTable,
+                items: state.cart,
+                timestamp: new Date().toISOString()
+            };
+
+            alert(`Pesanan Meja ${state.selectedTable} berhasil dikirim ke Koki & Kasir!`);
+            
+            // Reset State
+            state.cart = {};
+            state.selectedTable = null;
+            renderTables();
+            renderMenus();
+            updateActionBar();
+            document.getElementById('header-table').innerText = "BELUM DIPILIH";
+            document.getElementById('selected-table-badge').classList.add('hidden');
+        }
+
+        init();
+    </script>
+</body>
+</html>
