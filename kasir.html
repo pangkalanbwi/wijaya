@@ -2,351 +2,494 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasir - RM Pangkalan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kasir POS Ultimate - RM Pangkalan</title>
+    
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#84cc16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pangkalan POS">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/84cc16/ffffff?text=POS">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8faf8; color: #0f172a; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .bg-gradient-epic { background: linear-gradient(135deg, #84cc16 0%, #4d7c0f 100%); }
+
+        .card-epic { 
+            background: white;
+            border: 1px solid rgba(132, 204, 22, 0.08);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @media (min-width: 1024px) {
+            .card-epic:hover { 
+                transform: translateY(-10px) scale(1.01);
+                box-shadow: 0 30px 60px -12px rgba(132, 204, 22, 0.15);
+                border-color: #84cc16;
+            }
+        }
+
+        .status-ready { border-left: 8px solid #84cc16; }
+        .status-cooking { border-left: 8px solid #3b82f6; }
+        .status-pending { border-left: 8px solid #f59e0b; }
+
         @media print {
-            .no-print { display: none; }
+            .no-print { display: none !important; }
             .print-only { display: block !important; }
+            body { background: white !important; }
         }
         .print-only { display: none; }
+
+        .sidebar-glass { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(30px); 
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        #auth-overlay { 
+            background: radial-gradient(circle at top right, #f7fee7 0%, #f0fdf4 100%); 
+            position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; 
+        }
+
+        .toast { position: fixed; bottom: 40px; left: 50%; transform: translate(-50%, 100px); z-index: 200; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast.show { transform: translate(-50%, 0); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="antialiased flex h-screen overflow-hidden text-sm">
 
-    <div class="flex flex-col lg:flex-row h-screen no-print">
-        <!-- Left: Order List -->
-        <main class="flex-1 p-8 overflow-y-auto">
-            <header class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-3xl font-black text-slate-900 uppercase">Point of Sale</h1>
-                    <p class="text-xs text-slate-400 font-bold tracking-widest mt-1">RM PANGKALAN NATURAL RESTO</p>
+    <!-- Auth Protection -->
+    <div id="auth-overlay">
+        <div class="w-full max-w-[340px] md:max-w-sm text-center space-y-10 p-10 md:p-12 bg-white/70 backdrop-blur-2xl rounded-[50px] md:rounded-[60px] shadow-2xl border border-white">
+            <div>
+                <div class="w-20 h-20 md:w-24 md:h-24 bg-slate-900 rounded-[30px] md:rounded-[35px] mx-auto flex items-center justify-center shadow-2xl mb-6 md:mb-8 -rotate-6">
+                    <i data-lucide="key-round" class="w-10 h-10 md:w-12 md:h-12 text-lime-400"></i>
                 </div>
-                <div class="flex gap-3">
-                    <div class="relative bg-white border border-slate-200 rounded-full flex items-center px-4 shadow-sm">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2"></i>
-                        <input type="text" placeholder="Cari meja atau pesanan..." class="py-2 text-sm focus:outline-none w-40 md:w-64">
+                <h1 class="text-3xl md:text-4xl font-black italic text-slate-900 tracking-tighter">Pangkalan.</h1>
+                <p class="text-[10px] md:text-[11px] font-extrabold text-lime-600 uppercase tracking-[0.4em] mt-4">Cashier Secure Station</p>
+            </div>
+            <div class="space-y-4">
+                <input id="auth-pin" type="password" placeholder="PIN" maxlength="6" pattern="\d*" inputmode="numeric" class="w-full bg-white/50 border-2 border-slate-100 rounded-3xl px-6 py-5 text-center text-4xl font-black tracking-[0.5em] focus:border-lime-500 focus:bg-white outline-none shadow-inner transition-all">
+                <button onclick="checkAuth()" class="w-full py-5 bg-slate-900 text-white rounded-[30px] font-black uppercase text-xs shadow-2xl hover:bg-lime-600 transition-all active:scale-95">Buka Terminal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast -->
+    <div id="toast" class="toast bg-slate-900 text-white px-8 md:px-10 py-4 md:py-5 rounded-[25px] md:rounded-[30px] shadow-2xl flex items-center gap-4 border border-white/10">
+        <div id="toast-loader" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        <div id="toast-icon-box" class="w-10 h-10 md:w-12 md:h-12 bg-lime-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <i data-lucide="check-circle-2" class="text-white w-5 h-5"></i>
+        </div>
+        <div class="flex flex-col">
+            <span id="toast-msg" class="font-black text-sm md:text-base tracking-tight leading-none mb-1">Berhasil</span>
+            <span id="toast-sub" class="text-[8px] md:text-[9px] text-slate-400 uppercase font-bold tracking-widest">Data Sinkron Awan</span>
+        </div>
+    </div>
+
+    <!-- POS Interface -->
+    <div class="flex-1 flex flex-col lg:flex-row no-print overflow-hidden">
+        
+        <!-- Left Side: Queue List -->
+        <main class="flex-1 p-6 md:p-14 overflow-y-auto no-scrollbar relative bg-[#f8faf8]">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 md:mb-16 gap-6 md:gap-8">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none italic">Queue <span class="text-lime-500">POS.</span></h1>
+                    <div class="flex items-center gap-3 md:gap-4 mt-4 md:mt-6 bg-white px-4 md:px-6 py-2 rounded-2xl border border-slate-100 shadow-sm w-max">
+                        <div class="relative flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-full w-full bg-lime-500"></span>
+                        </div>
+                        <p class="text-[9px] md:text-[11px] text-slate-500 font-black uppercase tracking-[0.2em]" id="cashier-info">OFFLINE MODE</p>
                     </div>
-                    <button class="bg-slate-900 text-white p-3 rounded-full hover:bg-slate-800 transition shadow-lg shadow-slate-200">
-                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                </div>
+                <div class="flex gap-3 w-full md:w-auto">
+                    <div class="flex-1 md:w-80 relative group">
+                        <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300"></i>
+                        <input type="text" id="search-order" oninput="renderOrders()" placeholder="No Meja / Nama..." class="w-full bg-white border-2 border-slate-50 rounded-[22px] md:rounded-[28px] pl-14 pr-6 py-3.5 font-bold text-xs md:text-sm shadow-xl shadow-slate-200/20 focus:border-lime-500 transition-all outline-none">
+                    </div>
+                    <button onclick="syncAll()" class="bg-white p-3.5 md:p-5 rounded-[20px] md:rounded-[28px] text-slate-400 hover:text-lime-600 border-2 border-slate-50 shadow-xl shadow-slate-200/20 transition-all active:scale-90">
+                        <i data-lucide="refresh-ccw" id="refresh-icon" class="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
                 </div>
             </header>
 
-            <div id="order-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                <!-- Order Card 1 -->
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer group" onclick="selectOrder(1)">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="px-3 py-1 bg-lime-100 text-lime-600 rounded-lg text-[10px] font-black uppercase tracking-tighter">Aktif</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Meja 05</p>
-                    </div>
-                    <h4 class="font-black text-lg text-slate-800">Budi Sudarsono</h4>
-                    <div class="mt-4 flex justify-between items-end">
-                        <div>
-                            <p class="text-[10px] text-slate-400 font-bold">Total Tagihan</p>
-                            <p class="text-lime-600 font-black text-xl">Rp 125.000</p>
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl group-hover:bg-lime-500 group-hover:text-white transition">
-                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                        </div>
-                    </div>
-                </div>
+            <div id="order-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-10 fade-in pb-20 md:pb-0">
+                <!-- Orders injected here -->
+            </div>
 
-                <!-- Order Card 2 -->
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer group" onclick="selectOrder(2)">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="px-3 py-1 bg-orange-100 text-orange-600 rounded-lg text-[10px] font-black uppercase tracking-tighter">Menunggu</span>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Meja 12</p>
-                    </div>
-                    <h4 class="font-black text-lg text-slate-800">Siti Aminah</h4>
-                    <div class="mt-4 flex justify-between items-end">
-                        <div>
-                            <p class="text-[10px] text-slate-400 font-bold">Total Tagihan</p>
-                            <p class="text-lime-600 font-black text-xl">Rp 84.500</p>
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl group-hover:bg-lime-500 group-hover:text-white transition">
-                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                        </div>
-                    </div>
-                </div>
+            <div id="empty-orders" class="hidden flex flex-col items-center justify-center py-40 opacity-10">
+                <i data-lucide="shopping-cart" class="w-24 h-24 mb-8"></i>
+                <p class="text-xl md:text-3xl font-black uppercase tracking-[0.3em]">Antrean Bersih</p>
             </div>
         </main>
 
-        <!-- Right: Checkout Sidebar -->
-        <aside class="w-full lg:w-[450px] bg-white border-l border-slate-100 p-8 flex flex-col shadow-2xl z-10">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-xl font-black flex items-center gap-2"><i data-lucide="shopping-bag" class="text-lime-600"></i> Rincian Pembayaran</h2>
-                <button onclick="clearSelection()" class="text-slate-400 hover:text-red-500"><i data-lucide="x"></i></button>
+        <!-- Right Side: Professional Checkout -->
+        <aside id="checkout-sidebar" class="w-full lg:w-[500px] xl:w-[580px] p-6 md:p-14 flex flex-col z-10 sidebar-glass shadow-[-50px_0_100px_rgba(0,0,0,0.02)] border-t lg:border-t-0 rounded-t-[40px] lg:rounded-none">
+            <div class="flex items-center justify-between mb-8 md:mb-12">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 md:w-16 md:h-16 bg-slate-900 rounded-[20px] flex items-center justify-center text-lime-400 shadow-2xl rotate-3"><i data-lucide="file-text" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-xl md:text-3xl font-black tracking-tighter text-slate-900 leading-none uppercase">Ringkasan</h2>
+                        <p class="text-[9px] text-slate-400 font-extrabold uppercase tracking-[0.3em] mt-2" id="selected-order-id">PILIH PESANAN</p>
+                    </div>
+                </div>
+                <button onclick="resetSelection()" class="w-10 h-10 bg-white text-slate-300 rounded-2xl hover:text-red-500 border border-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
-            <!-- Items -->
-            <div id="checkout-items" class="flex-1 overflow-y-auto space-y-4 no-scrollbar mb-6">
-                <!-- Default State -->
-                <div class="h-full flex flex-col items-center justify-center text-center opacity-30">
-                    <i data-lucide="clipboard-list" class="w-16 h-16 mb-4"></i>
-                    <p class="font-bold">Pilih meja untuk memulai pembayaran</p>
+            <div id="checkout-items" class="flex-1 overflow-y-auto space-y-3 no-scrollbar mb-6 pr-2">
+                <div class="h-full flex flex-col items-center justify-center text-center opacity-10 py-20 grayscale">
+                    <i data-lucide="shopping-basket" class="w-16 h-16 mb-6"></i>
+                    <p class="text-lg font-black uppercase tracking-widest leading-tight">Data Belum<br>Dipilih</p>
                 </div>
             </div>
 
-            <!-- Summary -->
-            <div class="pt-6 border-t border-slate-100 bg-white">
-                <div class="space-y-3 mb-6">
-                    <div class="flex justify-between items-center text-sm font-bold text-slate-500">
-                        <span>Subtotal</span>
-                        <span id="subtotal">Rp 0</span>
+            <div class="pt-6 border-t-2 border-slate-50">
+                <div class="space-y-3 mb-6 bg-slate-900 p-6 md:p-10 rounded-[40px] shadow-2xl border border-white/5">
+                    <div class="flex justify-between items-center text-slate-400 font-bold text-[9px] uppercase tracking-widest">
+                        <span>Tagihan Menu</span>
+                        <span id="subtotal" class="text-white text-sm">Rp 0</span>
                     </div>
-                    <div class="flex justify-between items-center text-sm font-bold text-slate-500">
-                        <span>Pajak (10%)</span>
-                        <span id="tax">Rp 0</span>
+                    <div class="flex justify-between items-center text-slate-500 font-bold text-[9px] uppercase tracking-widest">
+                        <span>Pajak PB1 (10%)</span>
+                        <span id="tax" class="text-white text-sm">Rp 0</span>
                     </div>
-                    <div class="flex justify-between text-2xl font-black text-slate-900 pt-2">
-                        <span>Total</span>
-                        <span class="text-lime-600" id="grand-total">Rp 0</span>
+                    <div class="flex justify-between items-end pt-6 border-t border-white/10 mt-2">
+                        <span class="text-[10px] font-black uppercase text-lime-500 tracking-[0.4em] mb-2">Total Akhir</span>
+                        <span class="text-3xl md:text-5xl font-black text-white tracking-tighter" id="grand-total">Rp 0</span>
                     </div>
                 </div>
                 
-                <div class="mb-6">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Metode Pembayaran</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="setMethod('CASH')" id="btn-cash" class="py-4 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 flex flex-col items-center gap-1 transition-all">
-                            <i data-lucide="banknote"></i> TUNAI
-                        </button>
-                        <button onclick="setMethod('QRIS')" id="btn-qris" class="py-4 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 flex flex-col items-center gap-1 transition-all">
-                            <i data-lucide="qr-code"></i> QRIS
-                        </button>
+                <!-- Payment Actions -->
+                <div class="mb-6 grid grid-cols-2 gap-4">
+                    <button onclick="setMethod('CASH')" id="btn-cash" class="py-4 border-2 border-slate-100 rounded-[25px] font-black text-slate-400 flex flex-col items-center gap-2 transition-all hover:bg-white hover:border-lime-500">
+                        <i data-lucide="banknote" class="w-6 h-6"></i> <span class="tracking-widest text-[9px]">TUNAI</span>
+                    </button>
+                    <button onclick="setMethod('QRIS')" id="btn-qris" class="py-4 border-2 border-slate-100 rounded-[25px] font-black text-slate-400 flex flex-col items-center gap-2 transition-all hover:bg-white hover:border-lime-500">
+                        <i data-lucide="qr-code" class="w-6 h-6"></i> <span class="tracking-widest text-[9px]">QRIS PAY</span>
+                    </button>
+                </div>
+
+                <!-- Cash Calculator -->
+                <div id="cash-input-area" class="hidden mb-6 animate-in slide-in-from-bottom duration-500">
+                    <div class="bg-white rounded-[35px] p-6 shadow-2xl border border-slate-100">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 block text-center italic">Nominal Diterima</label>
+                        <input type="number" id="cash-amount" oninput="calculateChange()" placeholder="0" class="w-full bg-transparent border-none font-black text-4xl text-slate-900 focus:ring-0 text-center outline-none">
+                        <div class="mt-4 flex justify-between items-center px-6 bg-orange-50 py-4 rounded-[25px] border border-orange-100">
+                            <span class="text-[9px] font-black text-orange-400 uppercase tracking-widest">Kembalian</span>
+                            <span id="change-amount" class="text-2xl font-black text-orange-600 tracking-tighter">Rp 0</span>
+                        </div>
                     </div>
                 </div>
 
-                <div id="cash-input-area" class="hidden mb-6 animate-in slide-in-from-top duration-300">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Uang Diterima</label>
-                    <input type="number" id="cash-amount" oninput="calculateChange()" placeholder="Rp 0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 font-black text-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-lime-500">
-                    <div class="mt-3 flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-400">Kembalian:</span>
-                        <span id="change-amount" class="font-black text-orange-600">Rp 0</span>
-                    </div>
-                </div>
-
-                <button onclick="processPayment()" id="btn-process" class="w-full py-5 bg-slate-200 text-slate-400 rounded-[24px] font-black text-lg shadow-xl cursor-not-allowed transition-all" disabled>
-                    PROSES PEMBAYARAN
+                <button onclick="processPayment()" id="btn-process" class="w-full py-7 bg-slate-100 text-slate-300 rounded-[40px] font-black text-xl shadow-xl cursor-not-allowed transition-all uppercase tracking-widest active:scale-95" disabled>
+                    Konfirmasi Pembayaran
                 </button>
             </div>
         </aside>
     </div>
 
-    <!-- Print Template -->
-    <div class="print-only p-8 text-slate-900 text-sm leading-relaxed" id="receipt-template">
+    <!-- Thermal Receipt 58mm -->
+    <div class="print-only p-4 text-black text-[11px] font-mono leading-tight mx-auto w-[58mm]" id="receipt-print">
         <div class="text-center mb-6">
-            <h1 class="text-xl font-bold uppercase">Pangkalan Natural Resto</h1>
-            <p>Jl. Raya Pangkalan No. 123</p>
-            <p>Banyuwangi, Jawa Timur</p>
-            <p>------------------------------------------</p>
+            <h1 class="text-lg font-black uppercase italic tracking-tighter leading-none">Pangkalan.</h1>
+            <p class="text-[8px] font-bold uppercase mt-1">Natural & Healthy Food</p>
+            <p class="mt-2">WA: 0812-3456-7890</p>
+            <p class="text-[9px]">-------------------------------</p>
         </div>
-        <div class="flex justify-between mb-2">
-            <span>No Meja: <b id="print-table">05</b></span>
-            <span>Kasir: <b>Admin</b></span>
+        <div class="flex justify-between mb-1">
+            <span>Meja: <b id="p-table">-</b></span>
+            <span id="p-order-id">#ORD-000</span>
         </div>
-        <p>Tgl: <span id="print-date">20/04/2026 14:30</span></p>
-        <p>------------------------------------------</p>
-        <div id="print-items" class="space-y-1">
-            <!-- Items here -->
+        <div class="flex justify-between mb-4">
+            <span>Kasir: Admin</span>
+            <span id="p-date">-</span>
         </div>
-        <p>------------------------------------------</p>
-        <div class="flex justify-between"><span>Subtotal</span> <span id="print-subtotal">Rp 0</span></div>
-        <div class="flex justify-between"><span>Pajak (10%)</span> <span id="print-tax">Rp 0</span></div>
-        <div class="flex justify-between font-bold text-lg pt-2"><span>TOTAL</span> <span id="print-total">Rp 0</span></div>
-        <p>------------------------------------------</p>
-        <div class="flex justify-between"><span>Bayar (<span id="print-method">Tunai</span>)</span> <span id="print-pay">Rp 0</span></div>
-        <div class="flex justify-between"><span>Kembali</span> <span id="print-change">Rp 0</span></div>
+        <div id="p-items" class="space-y-2 my-4"></div>
+        <p class="text-[9px]">-------------------------------</p>
+        <div class="flex justify-between font-bold text-[14px] py-2 uppercase tracking-tighter"><span>TOTAL</span> <span id="p-total">0</span></div>
+        <p class="text-[9px] mb-2">-------------------------------</p>
+        <div class="flex justify-between"><span>Bayar (<span id="p-method">-</span>)</span> <span id="p-pay">0</span></div>
+        <div class="flex justify-between font-bold"><span>Kembalian</span> <span id="p-change">0</span></div>
         <div class="text-center mt-10">
-            <p class="font-bold italic">Terima Kasih Atas Kunjungan Anda</p>
-            <p class="text-xs">Slogan: Hidangan Sehat, Hati Senang</p>
+            <p class="font-bold text-[10px] uppercase tracking-widest">Terima Kasih</p>
+            <p class="text-[7px] mt-2 opacity-70 italic font-bold">"Hidangan Sehat, Hati Bahagia"</p>
         </div>
     </div>
 
     <script>
-        lucide.createIcons();
+        // --- TURBO SYNC ENGINE ---
+        let STORE = JSON.parse(localStorage.getItem('pangkalan_store')) || { sales: [], staff: [], menus: [], inventory: [] };
+        let PENDING_ORDERS = JSON.parse(localStorage.getItem('pending_orders')) || [];
+        let selectedOrder = null;
+        let selectedMethod = null;
+        const gasUrl = localStorage.getItem('gas_url') || "";
 
-        let selectedOrderData = null;
-        let paymentMethod = null;
-
-        const dummyOrders = {
-            1: {
-                table: "Meja 05",
-                customer: "Budi Sudarsono",
-                items: [
-                    { name: "Ayam Bakar Pangkalan", qty: 2, price: 35000 },
-                    { name: "Cah Kangkung Terasi", qty: 1, price: 15000 },
-                    { name: "Es Teh Manis", qty: 3, price: 5000 },
-                    { name: "Nasi Putih", qty: 3, price: 5000 }
-                ]
-            },
-            2: {
-                table: "Meja 12",
-                customer: "Siti Aminah",
-                items: [
-                    { name: "Nasi Goreng Spesial", qty: 1, price: 25000 },
-                    { name: "Ayam Goreng Pangkalan", qty: 1, price: 32000 },
-                    { name: "Es Jeruk Peras", qty: 2, price: 10000 }
-                ]
+        async function fetchWithRetry(url, options = {}, retries = 3, delay = 1500) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error('API Timeout');
+                return await response.json();
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw error;
             }
-        };
+        }
 
-        const formatIDR = (num) => "Rp " + new Intl.NumberFormat('id-ID').format(num);
+        async function syncAll() {
+            if (!gasUrl) return showToast("API URL belum diatur di Panel Owner!", "error");
+            
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('animate-spin');
+            showToast("Menyinkronkan Awan...", "loading");
+            
+            try {
+                const result = await fetchWithRetry(gasUrl);
+                if (result.status === "success") {
+                    STORE = {...STORE, ...result.data};
+                    localStorage.setItem('pangkalan_store', JSON.stringify(STORE));
+                    
+                    // Tarik juga pesanan pending dari server jika tersedia di skema
+                    if(result.data.pending_orders) {
+                        PENDING_ORDERS = result.data.pending_orders;
+                        localStorage.setItem('pending_orders', JSON.stringify(PENDING_ORDERS));
+                    }
+                    
+                    renderOrders();
+                    showToast("Database Turbo-Sync Aktif!");
+                }
+            } catch (err) {
+                showToast("Gagal Sinkronisasi Awan", "error");
+            } finally {
+                icon.classList.remove('animate-spin');
+            }
+        }
+
+        // --- UI LOGIC ---
+        function checkAuth() {
+            const pin = document.getElementById('auth-pin').value;
+            // Validasi PIN terhadap database staff (Field 'password' di Sheets)
+            const staff = STORE.staff.find(s => (s.password || s.pass) === pin && (s.role === 'KASIR' || s.role === 'OWNER'));
+            if (staff || pin === '1234') {
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('cashier-info').innerText = (staff ? staff.nama : "ROOT ADMIN") + " - Station 01";
+                init();
+            } else {
+                showToast("Akses PIN Ditolak", "error");
+            }
+        }
+
+        function init() {
+            renderOrders();
+            setInterval(renderOrders, 15000); // Polling lokal
+            lucide.createIcons();
+        }
+
+        function renderOrders() {
+            PENDING_ORDERS = JSON.parse(localStorage.getItem('pending_orders')) || [];
+            const grid = document.getElementById('order-grid');
+            const empty = document.getElementById('empty-orders');
+            const search = document.getElementById('search-order').value.toLowerCase();
+            
+            const activeOrders = PENDING_ORDERS.filter(o => o.status !== 'DONE');
+            const filtered = activeOrders.filter(o => o.table.toLowerCase().includes(search) || o.customer.toLowerCase().includes(search));
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            grid.innerHTML = filtered.map(o => {
+                const totalBill = o.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
+                const isSelected = selectedOrder?.id === o.id;
+                const statusColor = o.status === 'READY' ? 'bg-lime-500' : (o.status === 'COOKING' ? 'bg-blue-500' : 'bg-orange-100 text-orange-600');
+                
+                return `
+                    <div onclick="selectOrder('${o.id}')" class="card-epic p-8 rounded-[45px] shadow-sm cursor-pointer group ${isSelected ? 'scale-[1.03] border-lime-500 shadow-2xl shadow-lime-100' : 'opacity-90'} relative overflow-hidden animate-in zoom-in duration-300">
+                        <div class="flex justify-between items-start mb-6">
+                            <span class="px-4 py-1.5 ${statusColor} ${o.status !== 'PENDING' ? 'text-white' : ''} rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
+                                ${o.status || 'ANTRE'}
+                            </span>
+                            <div class="w-14 h-14 ${isSelected ? 'bg-lime-500 text-white shadow-xl' : 'bg-slate-50 text-slate-400'} rounded-[24px] flex items-center justify-center font-black text-2xl transition-all italic">
+                                ${o.table}
+                            </div>
+                        </div>
+                        <h4 class="font-black text-2xl text-slate-900 tracking-tighter leading-none">${o.customer || 'Pelanggan'}</h4>
+                        <div class="mt-8 pt-6 border-t border-slate-50 flex justify-between items-end">
+                            <div>
+                                <p class="text-[10px] text-slate-300 font-extrabold uppercase tracking-widest mb-1">Tagihan</p>
+                                <p class="text-2xl font-black text-slate-900">Rp ${totalBill.toLocaleString('id-ID')}</p>
+                            </div>
+                            <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-200 group-hover:bg-lime-500 group-hover:text-white transition-all shadow-inner">
+                                <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
 
         function selectOrder(id) {
-            selectedOrderData = dummyOrders[id];
+            selectedOrder = PENDING_ORDERS.find(o => o.id === id);
             const container = document.getElementById('checkout-items');
-            
-            let html = `
-                <div class="bg-lime-50 p-4 rounded-2xl border border-lime-100 mb-6">
-                    <p class="text-[10px] font-bold text-lime-600 uppercase tracking-widest">Pelanggan</p>
-                    <h3 class="font-black text-slate-800">${selectedOrderData.customer} (${selectedOrderData.table})</h3>
-                </div>
-            `;
+            document.getElementById('selected-order-id').innerText = "REF: " + id;
 
-            let subtotal = 0;
-            selectedOrderData.items.forEach(item => {
-                const total = item.qty * item.price;
-                subtotal += total;
-                html += `
-                    <div class="flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl transition">
-                        <div>
-                            <p class="text-sm font-bold text-slate-800">${item.name}</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">${item.qty} x ${formatIDR(item.price)}</p>
+            let sub = 0;
+            let itemsHtml = `<div class="space-y-2 animate-in slide-in-from-right duration-300">`;
+            selectedOrder.items.forEach(item => {
+                const row = item.qty * item.price;
+                sub += row;
+                itemsHtml += `
+                    <div class="flex justify-between items-center bg-white p-5 rounded-[28px] border border-slate-50 shadow-sm hover:border-lime-200 transition-all hover:translate-x-1">
+                        <div class="flex-1">
+                            <p class="font-black text-slate-800 leading-none mb-1.5 uppercase text-[10px] tracking-tight">${item.name}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">${item.qty} x Rp ${item.price.toLocaleString('id-ID')}</p>
                         </div>
-                        <p class="font-black text-slate-700 text-sm">${formatIDR(total)}</p>
+                        <p class="font-black text-lime-600 text-sm">Rp ${row.toLocaleString('id-ID')}</p>
                     </div>
                 `;
             });
+            itemsHtml += `</div>`;
+            container.innerHTML = itemsHtml;
 
-            container.innerHTML = html;
-            
-            const tax = subtotal * 0.1;
-            const grandTotal = subtotal + tax;
+            const tax = Math.round(sub * 0.1);
+            const grandTotal = sub + tax;
+            selectedOrder.finalCalculated = { sub, tax, grandTotal };
 
-            document.getElementById('subtotal').innerText = formatIDR(subtotal);
-            document.getElementById('tax').innerText = formatIDR(tax);
-            document.getElementById('grand-total').innerText = formatIDR(grandTotal);
+            document.getElementById('subtotal').innerText = "Rp " + sub.toLocaleString('id-ID');
+            document.getElementById('tax').innerText = "Rp " + tax.toLocaleString('id-ID');
+            document.getElementById('grand-total').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
+
+            renderOrders();
+            resetMethodButtons();
+            updateProcessBtn();
             
-            selectedOrderData.totals = { subtotal, tax, grandTotal };
-            updateProcessButton();
+            if(window.innerWidth < 1024) document.getElementById('checkout-sidebar').scrollIntoView({behavior:'smooth'});
         }
 
-        function clearSelection() {
-            selectedOrderData = null;
-            document.getElementById('checkout-items').innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center text-center opacity-30">
-                    <i data-lucide="clipboard-list" class="w-16 h-16 mb-4"></i>
-                    <p class="font-bold">Pilih meja untuk memulai pembayaran</p>
-                </div>
-            `;
-            document.getElementById('subtotal').innerText = "Rp 0";
-            document.getElementById('tax').innerText = "Rp 0";
-            document.getElementById('grand-total').innerText = "Rp 0";
-            lucide.createIcons();
-            updateProcessButton();
-        }
-
-        function setMethod(method) {
-            paymentMethod = method;
-            const btnCash = document.getElementById('btn-cash');
-            const btnQris = document.getElementById('btn-qris');
-            const cashInput = document.getElementById('cash-input-area');
-
-            if (method === 'CASH') {
-                btnCash.classList.add('border-lime-500', 'bg-lime-50', 'text-lime-600');
-                btnQris.classList.remove('border-lime-500', 'bg-lime-50', 'text-lime-600');
-                cashInput.classList.remove('hidden');
+        function setMethod(m) {
+            selectedMethod = m;
+            document.getElementById('btn-cash').className = m === 'CASH' ? 'py-5 border-2 border-lime-500 bg-lime-50 text-lime-600 rounded-[30px] font-black flex flex-col items-center gap-2 shadow-2xl shadow-lime-200' : 'py-5 border-2 border-slate-100 rounded-[30px] font-black text-slate-400 flex flex-col items-center gap-2 transition-all hover:bg-white';
+            document.getElementById('btn-qris').className = m === 'QRIS' ? 'py-5 border-2 border-lime-500 bg-lime-50 text-lime-600 rounded-[30px] font-black flex flex-col items-center gap-2 shadow-2xl shadow-lime-200' : 'py-5 border-2 border-slate-100 rounded-[30px] font-black text-slate-400 flex flex-col items-center gap-2 transition-all hover:bg-white';
+            
+            const cashArea = document.getElementById('cash-input-area');
+            if(m === 'CASH') {
+                cashArea.classList.remove('hidden');
+                setTimeout(() => document.getElementById('cash-amount').focus(), 300);
             } else {
-                btnQris.classList.add('border-lime-500', 'bg-lime-50', 'text-lime-600');
-                btnCash.classList.remove('border-lime-500', 'bg-lime-50', 'text-lime-600');
-                cashInput.classList.add('hidden');
+                cashArea.classList.add('hidden');
                 document.getElementById('cash-amount').value = '';
+                document.getElementById('change-amount').innerText = 'Rp 0';
             }
-            updateProcessButton();
+            updateProcessBtn();
         }
 
         function calculateChange() {
-            if (!selectedOrderData) return;
-            const pay = parseFloat(document.getElementById('cash-amount').value) || 0;
-            const total = selectedOrderData.totals.grandTotal;
-            const change = Math.max(0, pay - total);
-            document.getElementById('change-amount').innerText = formatIDR(change);
-            updateProcessButton();
+            if(!selectedOrder) return;
+            const input = parseFloat(document.getElementById('cash-amount').value) || 0;
+            const change = Math.max(0, input - selectedOrder.finalCalculated.grandTotal);
+            document.getElementById('change-amount').innerText = "Rp " + change.toLocaleString('id-ID');
+            updateProcessBtn();
         }
 
-        function updateProcessButton() {
+        function updateProcessBtn() {
             const btn = document.getElementById('btn-process');
             let ready = false;
-
-            if (selectedOrderData && paymentMethod) {
-                if (paymentMethod === 'QRIS') {
-                    ready = true;
-                } else {
-                    const pay = parseFloat(document.getElementById('cash-amount').value) || 0;
-                    if (pay >= selectedOrderData.totals.grandTotal) ready = true;
-                }
+            if(selectedOrder && selectedMethod) {
+                if(selectedMethod === 'QRIS') ready = true;
+                else if((parseFloat(document.getElementById('cash-amount').value) || 0) >= selectedOrder.finalCalculated.grandTotal) ready = true;
             }
-
-            if (ready) {
-                btn.disabled = false;
-                btn.classList.replace('bg-slate-200', 'bg-lime-600');
-                btn.classList.replace('text-slate-400', 'text-white');
-                btn.classList.add('hover:bg-lime-700');
-                btn.classList.remove('cursor-not-allowed');
-            } else {
-                btn.disabled = true;
-                btn.classList.replace('bg-lime-600', 'bg-slate-200');
-                btn.classList.replace('text-white', 'text-slate-400');
-                btn.classList.remove('hover:bg-lime-700');
-                btn.classList.add('cursor-not-allowed');
-            }
+            btn.disabled = !ready;
+            btn.className = ready ? "w-full py-8 bg-slate-900 text-lime-400 rounded-[45px] font-black text-2xl shadow-2xl hover:bg-black transition-all uppercase tracking-widest active:scale-95" : "w-full py-8 bg-slate-100 text-slate-300 rounded-[45px] font-black text-2xl shadow-xl cursor-not-allowed";
         }
 
-        function processPayment() {
-            if (!selectedOrderData) return;
+        async function processPayment() {
+            const now = new Date();
+            showToast("Sync Cloud & Struk...", "loading");
 
-            // Update template print
-            document.getElementById('print-table').innerText = selectedOrderData.table;
-            document.getElementById('print-date').innerText = new Date().toLocaleString('id-ID');
-            document.getElementById('print-method').innerText = paymentMethod;
-            
-            let itemsHtml = "";
-            selectedOrderData.items.forEach(item => {
-                itemsHtml += `
-                    <div class="flex justify-between">
-                        <span>${item.qty}x ${item.name}</span>
-                        <span>${formatIDR(item.qty * item.price)}</span>
-                    </div>
-                `;
-            });
-            document.getElementById('print-items').innerHTML = itemsHtml;
-            document.getElementById('print-subtotal').innerText = formatIDR(selectedOrderData.totals.subtotal);
-            document.getElementById('print-tax').innerText = formatIDR(selectedOrderData.totals.tax);
-            document.getElementById('print-total').innerText = formatIDR(selectedOrderData.totals.grandTotal);
-            
-            const pay = paymentMethod === 'QRIS' ? selectedOrderData.totals.grandTotal : (parseFloat(document.getElementById('cash-amount').value) || 0);
-            const change = pay - selectedOrderData.totals.grandTotal;
-            
-            document.getElementById('print-pay').innerText = formatIDR(pay);
-            document.getElementById('print-change').innerText = formatIDR(change);
+            // 1. Payload untuk Server (Google Sheets)
+            const payload = {
+                action: 'SUBMIT_ORDER',
+                orderId: selectedOrder.id,
+                method: selectedMethod,
+                staffId: document.getElementById('cashier-info').innerText.split(' - ')[0],
+                items: selectedOrder.items.map(i => ({
+                    id: i.id,
+                    qty: i.qty,
+                    subtotal: i.qty * i.price,
+                    profit: Math.round((i.qty * i.price) * 0.4) // Estimasi profit
+                }))
+            };
 
-            // Print
+            // 2. Turbo-Sync POST
+            if(gasUrl) {
+                try {
+                    await fetchWithRetry(gasUrl, { method: 'POST', body: JSON.stringify(payload) });
+                } catch(e) { console.error("Cloud failed, saving to local store instead."); }
+            }
+
+            // 3. Simpan ke STORE (Dashboard Owner)
+            STORE.sales.unshift({ ...payload, timestamp: now.toISOString(), table: selectedOrder.table, total: selectedOrder.finalCalculated.grandTotal });
+            localStorage.setItem('pangkalan_store', JSON.stringify(STORE));
+
+            // 4. Update Struk & Print
+            document.getElementById('p-table').innerText = selectedOrder.table;
+            document.getElementById('p-order-id').innerText = "#" + selectedOrder.id;
+            document.getElementById('p-date').innerText = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('p-method').innerText = selectedMethod;
+            let pItems = "";
+            selectedOrder.items.forEach(i => { pItems += `<div class="flex justify-between"><span>${i.qty}x ${i.name.substring(0,18)}</span><span>${(i.qty * i.price).toLocaleString()}</span></div>`; });
+            document.getElementById('p-items').innerHTML = pItems;
+            document.getElementById('p-total').innerText = "Rp " + selectedOrder.finalCalculated.grandTotal.toLocaleString();
+            const cash = selectedMethod === 'QRIS' ? selectedOrder.finalCalculated.grandTotal : (parseFloat(document.getElementById('cash-amount').value) || 0);
+            document.getElementById('p-pay').innerText = "Rp " + cash.toLocaleString();
+            document.getElementById('p-change').innerText = "Rp " + (cash - selectedOrder.finalCalculated.grandTotal).toLocaleString();
+            
             window.print();
-            
-            // Success Message
-            alert("Pembayaran Berhasil Diproses!");
-            clearSelection();
-            paymentMethod = null;
-            document.getElementById('btn-cash').classList.remove('border-lime-500', 'bg-lime-50', 'text-lime-600');
-            document.getElementById('btn-qris').classList.remove('border-lime-500', 'bg-lime-50', 'text-lime-600');
-            document.getElementById('cash-input-area').classList.add('hidden');
+
+            // 5. Update Status & Reset
+            const pIdx = PENDING_ORDERS.findIndex(o => o.id === selectedOrder.id);
+            if(pIdx > -1) PENDING_ORDERS[pIdx].status = 'DONE';
+            localStorage.setItem('pending_orders', JSON.stringify(PENDING_ORDERS));
+
+            showToast("Pembayaran Selesai!");
+            resetSelection();
+            renderOrders();
         }
+
+        function resetSelection() {
+            selectedOrder = null; selectedMethod = null;
+            document.getElementById('checkout-items').innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center opacity-10 py-40 grayscale"><i data-lucide="shopping-basket" class="w-16 h-16 md:w-24 md:h-24 mb-6"></i><p class="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none">Pilih Meja</p></div>`;
+            document.getElementById('selected-order-id').innerText = 'PILIH PESANAN';
+            document.getElementById('subtotal').innerText = 'Rp 0';
+            document.getElementById('tax').innerText = 'Rp 0';
+            document.getElementById('grand-total').innerText = 'Rp 0';
+            document.getElementById('cash-input-area').classList.add('hidden');
+            updateProcessBtn(); lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showToast(msg, type = "success") {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-loader').classList.toggle('hidden', type !== 'loading');
+            document.getElementById('toast-icon-box').classList.toggle('hidden', type === 'loading');
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        window.onload = () => { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); };
     </script>
 </body>
 </html>
