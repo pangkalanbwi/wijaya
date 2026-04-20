@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Panel - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="flex">
+
+    <!-- Sidebar Menu -->
+    <aside class="w-64 h-screen bg-slate-900 text-white fixed left-0 top-0 p-6">
+        <h1 class="text-xl font-black mb-10 text-lime-400">OWNER PANEL</h1>
+        <nav class="space-y-2">
+            <button class="w-full text-left px-4 py-3 bg-white/10 rounded-xl font-bold flex items-center gap-3"><i data-lucide="bar-chart-3"></i> Dashboard</button>
+            <button class="w-full text-left px-4 py-3 text-slate-400 hover:bg-white/5 rounded-xl flex items-center gap-3 transition"><i data-lucide="package"></i> Stok Bahan</button>
+            <button class="w-full text-left px-4 py-3 text-slate-400 hover:bg-white/5 rounded-xl flex items-center gap-3 transition"><i data-lucide="book-open"></i> Resep & HPP</button>
+            <button class="w-full text-left px-4 py-3 text-slate-400 hover:bg-white/5 rounded-xl flex items-center gap-3 transition"><i data-lucide="users"></i> Pegawai</button>
+            <div class="pt-10">
+                <a href="index.html" class="w-full text-left px-4 py-3 text-red-400 flex items-center gap-3 transition"><i data-lucide="log-out"></i> Keluar</a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="ml-64 flex-1 p-10">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-black">Ringkasan Bisnis</h2>
+                <p class="text-slate-400">Data performa RM Pangkalan hari ini</p>
+            </div>
+            <button onclick="syncData()" class="bg-lime-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-lime-200">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Turbo Sync
+            </button>
+        </header>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Penjualan Bersih</p>
+                <h3 class="text-3xl font-black text-slate-900">Rp 4.250.000</h3>
+                <p class="text-xs text-lime-600 font-bold mt-2">+12% vs Kemarin</p>
+            </div>
+            <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Estimasi Profit (HPP)</p>
+                <h3 class="text-3xl font-black text-lime-600">Rp 1.840.000</h3>
+                <p class="text-xs text-slate-400 font-bold mt-2">Berdasarkan pemakaian stok</p>
+            </div>
+            <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Stok Perlu Re-order</p>
+                <h3 class="text-3xl font-black text-red-600">5 Item</h3>
+                <p class="text-xs text-red-400 font-bold mt-2">Ayam, Minyak, Beras...</p>
+            </div>
+        </div>
+
+        <!-- Inventory List -->
+        <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-50 flex justify-between items-center">
+                <h4 class="font-bold text-lg">Manajemen Stok & Harga Bahan</h4>
+                <button class="text-lime-600 text-sm font-bold">+ Bahan Baru</button>
+            </div>
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase">
+                    <tr>
+                        <th class="p-5">Bahan Baku</th>
+                        <th class="p-5">Kategori</th>
+                        <th class="p-5">Stok Sisa</th>
+                        <th class="p-5">Harga Beli</th>
+                        <th class="p-5">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    <tr class="border-b last:border-0 hover:bg-slate-50 transition">
+                        <td class="p-5 font-bold">Ayam Potong Broiler</td>
+                        <td class="p-5"><span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">DAGING</span></td>
+                        <td class="p-5">12.5 Kg</td>
+                        <td class="p-5">Rp 34.000 /Kg</td>
+                        <td class="p-5"><button class="text-slate-400"><i data-lucide="edit-3" class="w-4 h-4"></i></button></td>
+                    </tr>
+                    <tr class="border-b last:border-0 hover:bg-slate-50 transition">
+                        <td class="p-5 font-bold">Minyak Goreng Sawit</td>
+                        <td class="p-5"><span class="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-lg text-xs font-bold">MINYAK</span></td>
+                        <td class="p-5 text-red-600 font-black">2.0 L</td>
+                        <td class="p-5">Rp 16.500 /L</td>
+                        <td class="p-5"><button class="text-slate-400"><i data-lucide="edit-3" class="w-4 h-4"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        function syncData() {
+            alert("Sinkronisasi dengan Google Sheets berhasil (Turbo Mode)");
+        }
+    </script>
+</body>
+</html>
