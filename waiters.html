@@ -13,6 +13,7 @@
         .category-pill-active { background-color: #65a30d; color: white; border-color: #65a30d; }
         .table-active { border-color: #65a30d; color: #65a30d; background-color: #f7fee7; }
         .floating-cart { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        input:focus { outline: none; }
     </style>
 </head>
 <body class="antialiased text-slate-800 pb-32">
@@ -39,6 +40,14 @@
     </header>
 
     <main class="p-4 md:p-6 max-w-5xl mx-auto">
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <div class="relative group">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-lime-600 transition-colors"></i>
+                <input type="text" id="menu-search" oninput="handleSearch(this.value)" placeholder="Cari menu masakan..." class="w-full bg-white border border-slate-100 rounded-2xl pl-12 pr-4 py-4 shadow-sm focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all font-semibold text-sm">
+            </div>
+        </div>
+
         <!-- Table Selector -->
         <div class="mb-8">
             <div class="flex items-center justify-between mb-4">
@@ -51,16 +60,21 @@
         </div>
 
         <!-- Menu Categories -->
-        <div class="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
-            <button class="category-pill-active px-6 py-2.5 rounded-2xl text-[10px] font-black shadow-lg shadow-lime-100 border transition-all">SEMUA</button>
-            <button class="bg-white border px-6 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 hover:border-lime-200 transition-all">MAKANAN</button>
-            <button class="bg-white border px-6 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 hover:border-lime-200 transition-all">MINUMAN</button>
-            <button class="bg-white border px-6 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 hover:border-lime-200 transition-all">CAMILAN</button>
+        <div id="category-container" class="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
+            <!-- Diisi via JS -->
         </div>
 
         <!-- Menu Grid -->
         <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             <!-- Diisi via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden py-20 text-center flex flex-col items-center">
+            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                <i data-lucide="search-x" class="w-8 h-8"></i>
+            </div>
+            <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Menu tidak ditemukan</p>
         </div>
     </main>
 
@@ -69,9 +83,9 @@
         <button onclick="sendOrder()" class="w-full bg-slate-900 hover:bg-lime-600 p-2 rounded-[28px] shadow-2xl transition-all duration-500 group">
             <div class="flex items-center justify-between pl-6 pr-2 py-2">
                 <div class="text-left">
-                    <p class="text-[10px] font-bold text-slate-400 group-hover:text-white/60 uppercase tracking-widest">Simpan Pesanan</p>
+                    <p class="text-[10px] font-bold text-slate-400 group-hover:text-white/60 uppercase tracking-widest">Kirim ke Koki & Kasir</p>
                     <h4 class="text-white font-black flex items-center gap-2">
-                        <span id="cart-count">0</span> Pesanan <span class="text-slate-500 group-hover:text-white/40">|</span> <span id="cart-total">Rp 0</span>
+                        <span id="cart-count">0</span> Item <span class="text-slate-500 group-hover:text-white/40">|</span> <span id="cart-total">Rp 0</span>
                     </h4>
                 </div>
                 <div class="w-14 h-14 bg-lime-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-white group-hover:text-lime-600 transition-all">
@@ -82,26 +96,34 @@
     </div>
 
     <script>
-        // Data Dummy (Nantinya difetch dari Google Sheets)
+        // --- KONFIGURASI ---
+        const apiKey = ""; // Diset otomatis oleh environment
+        const GAS_URL = ""; // Masukkan URL Web App Google Apps Script Anda
+
         const APP_DATA = {
             tables: [1, 2, 3, 4, 5, 6, 7, 8, 'VIP1', 'VIP2'],
+            categories: ['SEMUA', 'MAKANAN', 'SEGERAN', 'WEDANGAN', 'CAMILAN'],
             menus: [
-                { id: 1, name: 'Ayam Goreng Pangkalan', price: 25000, category: 'MAKANAN', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300' },
-                { id: 2, name: 'Es Jeruk Nipis Segar', price: 8000, category: 'MINUMAN', img: 'https://images.unsplash.com/photo-1544145945-f904253db0ad?auto=format&fit=crop&q=80&w=300' },
-                { id: 3, name: 'Cah Kangkung Terasi', price: 15000, category: 'MAKANAN', img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=300' },
-                { id: 4, name: 'Pisang Goreng Keju', price: 12000, category: 'CAMILAN', img: 'https://images.unsplash.com/photo-1590004953392-5aba2e785943?auto=format&fit=crop&q=80&w=300' }
+                { id: 1, name: 'Ayam Goreng Pangkalan', price: 25000, category: 'MAKANAN', img: '1yqG7R0...' },
+                { id: 2, name: 'Es Jeruk Nipis Segar', price: 8000, category: 'SEGERAN', img: '1zK8H9...' },
+                { id: 3, name: 'Cah Kangkung Terasi', price: 15000, category: 'MAKANAN', img: '1aBcD2...' },
+                { id: 4, name: 'Pisang Goreng Keju', price: 12000, category: 'CAMILAN', img: '1eFgh3...' },
+                { id: 5, name: 'Wedang Jahe Madu', price: 10000, category: 'WEDANGAN', img: '1iJkl4...' }
             ]
         };
 
-        // State Management
+        // --- STATE MANAGEMENT ---
         let state = {
             selectedTable: null,
+            activeCategory: 'SEMUA',
+            searchQuery: '',
             cart: {} // { menuId: qty }
         };
 
-        // Initialize UI
+        // --- INITIALIZATION ---
         function init() {
             renderTables();
+            renderCategories();
             renderMenus();
             lucide.createIcons();
         }
@@ -109,45 +131,76 @@
         function renderTables() {
             const container = document.getElementById('table-container');
             container.innerHTML = APP_DATA.tables.map(t => `
-                <button onclick="setTable('${t}')" id="table-${t}" class="min-w-[70px] h-[70px] bg-white border-2 border-slate-100 rounded-[22px] font-black text-slate-400 hover:border-lime-200 transition-all flex items-center justify-center text-sm">
+                <button onclick="setTable('${t}')" id="table-${t}" class="min-w-[70px] h-[70px] bg-white border-2 border-slate-100 rounded-[22px] font-black text-slate-400 hover:border-lime-200 transition-all flex items-center justify-center text-sm ${state.selectedTable == t ? 'table-active border-lime-500 text-lime-600' : ''}">
                     ${t}
+                </button>
+            `).join('');
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('category-container');
+            container.innerHTML = APP_DATA.categories.map(cat => `
+                <button onclick="setCategory('${cat}')" class="px-6 py-2.5 rounded-2xl text-[10px] font-black border transition-all whitespace-nowrap ${state.activeCategory === cat ? 'category-pill-active shadow-lg shadow-lime-100' : 'bg-white text-slate-400 border-slate-100 hover:border-lime-200'}">
+                    ${cat}
                 </button>
             `).join('');
         }
 
         function renderMenus() {
             const container = document.getElementById('menu-grid');
-            container.innerHTML = APP_DATA.menus.map(menu => `
-                <div class="bg-white p-3 rounded-[32px] border border-slate-100 shadow-sm flex flex-col hover:shadow-md transition-all group">
+            const emptyState = document.getElementById('empty-state');
+            
+            const filtered = APP_DATA.menus.filter(menu => {
+                const matchCategory = state.activeCategory === 'SEMUA' || menu.category === state.activeCategory;
+                const matchSearch = menu.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+                return matchCategory && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = filtered.map(menu => `
+                <div class="bg-white p-3 rounded-[32px] border border-slate-100 shadow-sm flex flex-col hover:shadow-md transition-all group animate-in fade-in zoom-in duration-300">
                     <div class="aspect-square bg-slate-50 rounded-[24px] mb-4 overflow-hidden relative">
-                        <img src="${menu.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <img src="https://lh3.googleusercontent.com/d/${menu.img}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         <div class="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-[8px] font-black text-slate-500 border border-white">
                             ${menu.category}
                         </div>
                     </div>
                     <div class="px-1 flex-1">
-                        <h4 class="font-bold text-[11px] md:text-xs text-slate-800 leading-tight mb-1">${menu.name}</h4>
+                        <h4 class="font-bold text-[11px] md:text-xs text-slate-800 leading-tight mb-1 line-clamp-1">${menu.name}</h4>
                         <p class="text-lime-600 font-black text-sm">Rp ${menu.price.toLocaleString('id-ID')}</p>
                     </div>
-                    <div class="mt-4 flex items-center justify-between bg-slate-50 p-1.5 rounded-2xl">
-                        <button onclick="updateQty(${menu.id}, -1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">-</button>
-                        <span id="qty-${menu.id}" class="text-xs font-black text-slate-700">0</span>
-                        <button onclick="updateQty(${menu.id}, 1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-lime-600 shadow-sm hover:bg-lime-500 hover:text-white transition-all">+</button>
+                    <div class="mt-4 flex items-center justify-between bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                        <button onclick="updateQty(${menu.id}, -1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90">-</button>
+                        <span id="qty-${menu.id}" class="text-xs font-black text-slate-700">${state.cart[menu.id] || 0}</span>
+                        <button onclick="updateQty(${menu.id}, 1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-lime-600 shadow-sm hover:bg-lime-500 hover:text-white transition-all active:scale-90">+</button>
                     </div>
                 </div>
             `).join('');
+            
+            lucide.createIcons();
+        }
+
+        // --- ACTIONS ---
+        function handleSearch(val) {
+            state.searchQuery = val;
+            renderMenus();
+        }
+
+        function setCategory(cat) {
+            state.activeCategory = cat;
+            renderCategories();
+            renderMenus();
         }
 
         function setTable(t) {
             state.selectedTable = t;
-            // Reset UI Tables
-            document.querySelectorAll('#table-container button').forEach(btn => {
-                btn.classList.remove('table-active', 'border-lime-500', 'text-lime-600');
-            });
-            // Set Active UI
-            const activeBtn = document.getElementById(`table-${t}`);
-            activeBtn.classList.add('table-active', 'border-lime-500', 'text-lime-600');
-            
+            renderTables();
             document.getElementById('header-table').innerText = `MEJA ${t}`;
             document.getElementById('selected-table-badge').classList.remove('hidden');
         }
@@ -156,9 +209,7 @@
             if (!state.cart[id]) state.cart[id] = 0;
             state.cart[id] = Math.max(0, state.cart[id] + delta);
             
-            // Update UI Qty
             document.getElementById(`qty-${id}`).innerText = state.cart[id];
-            
             updateActionBar();
         }
 
@@ -185,32 +236,72 @@
             }
         }
 
-        function sendOrder() {
+        async function sendOrder() {
             if (!state.selectedTable) {
                 alert("Mohon pilih nomor meja terlebih dahulu!");
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
 
-            // Integrasi ke backend (G-Sheet) akan ditaruh di sini
+            const itemsToOrder = Object.entries(state.cart)
+                .filter(([_, qty]) => qty > 0)
+                .map(([id, qty]) => {
+                    const m = APP_DATA.menus.find(menu => menu.id == id);
+                    return { id, name: m.name, qty, price: m.price };
+                });
+
             const orderData = {
+                action: 'SUBMIT_ORDER',
                 table: state.selectedTable,
-                items: state.cart,
-                timestamp: new Date().toISOString()
+                items: itemsToOrder,
+                total: itemsToOrder.reduce((sum, i) => sum + (i.price * i.qty), 0),
+                staffId: 'WAITERS_01' // Dummy ID
             };
 
-            alert(`Pesanan Meja ${state.selectedTable} berhasil dikirim ke Koki & Kasir!`);
-            
-            // Reset State
-            state.cart = {};
-            state.selectedTable = null;
-            renderTables();
-            renderMenus();
-            updateActionBar();
-            document.getElementById('header-table').innerText = "BELUM DIPILIH";
-            document.getElementById('selected-table-badge').classList.add('hidden');
+            // Loading State UI
+            const btn = document.querySelector('#action-bar button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="flex items-center justify-center py-4 w-full"><i data-lucide="loader-2" class="animate-spin mr-2"></i> Mengirim Pesanan...</div>';
+            lucide.createIcons();
+
+            try {
+                // Implementasi Exponential Backoff
+                let response;
+                let delay = 1000;
+                for (let i = 0; i < 5; i++) {
+                    try {
+                        response = await fetch(GAS_URL, {
+                            method: 'POST',
+                            body: JSON.stringify(orderData)
+                        });
+                        if (response.ok) break;
+                    } catch (err) {
+                        if (i === 4) throw err;
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                    }
+                }
+
+                alert(`Berhasil! Pesanan Meja ${state.selectedTable} telah masuk ke antrean dapur.`);
+                
+                // Reset State
+                state.cart = {};
+                state.selectedTable = null;
+                init();
+                updateActionBar();
+                document.getElementById('header-table').innerText = "BELUM DIPILIH";
+                document.getElementById('selected-table-badge').classList.add('hidden');
+                document.getElementById('menu-search').value = '';
+                state.searchQuery = '';
+            } catch (error) {
+                alert("Gagal mengirim pesanan. Silakan coba lagi atau hubungi IT.");
+            } finally {
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+            }
         }
 
+        // Run
         init();
     </script>
 </body>
