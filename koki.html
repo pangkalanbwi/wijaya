@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Display - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; }
+    </style>
+</head>
+<body class="p-6 text-white">
+
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-black">Dapur Pangkalan</h1>
+            <p class="text-slate-400 text-sm">Monitor Pesanan Pelanggan</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="flex items-center gap-2 text-xs font-bold bg-lime-500/20 text-lime-400 px-4 py-2 rounded-full">
+                <span class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span> ONLINE
+            </span>
+            <a href="absensi.html" class="text-slate-400"><i data-lucide="log-out"></i></a>
+        </div>
+    </header>
+
+    <div id="kitchen-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Order Card -->
+        <div class="bg-slate-800 rounded-[32px] overflow-hidden border border-slate-700 shadow-2xl">
+            <div class="p-6 bg-orange-500 flex justify-between items-center text-white">
+                <span class="font-black text-xl">MEJA 08</span>
+                <span class="text-xs font-bold">12 Menit Lalu</span>
+            </div>
+            <div class="p-6">
+                <ul class="space-y-4 mb-8">
+                    <li class="flex justify-between items-start border-b border-slate-700/50 pb-3">
+                        <div class="flex-1">
+                            <p class="font-black text-lg">2x Ayam Bakar Pangkalan</p>
+                            <p class="text-xs text-orange-400 font-bold italic">- Sambal pisah, Nasi setengah</p>
+                        </div>
+                    </li>
+                    <li class="flex justify-between items-start border-b border-slate-700/50 pb-3">
+                        <div class="flex-1">
+                            <p class="font-black text-lg text-slate-300 line-through">1x Es Teh Manis</p>
+                            <p class="text-[10px] text-lime-400 font-bold uppercase">Selesai</p>
+                        </div>
+                    </li>
+                </ul>
+                <button class="w-full py-4 bg-lime-600 hover:bg-lime-700 text-white rounded-2xl font-black transition">
+                    SELESAI MASAK
+                </button>
+            </div>
+        </div>
+
+        <!-- Add more cards dynamically -->
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
