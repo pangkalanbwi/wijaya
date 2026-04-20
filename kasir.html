@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <div class="flex flex-col lg:flex-row h-screen">
+        <!-- Left: Order List -->
+        <main class="flex-1 p-8 overflow-y-auto">
+            <header class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-black text-slate-900 uppercase">Point of Sale</h1>
+                <div class="flex gap-3">
+                    <input type="text" placeholder="Cari pesanan..." class="bg-white border rounded-full px-5 py-2 text-sm focus:outline-none">
+                    <button class="bg-slate-900 text-white p-2 rounded-full"><i data-lucide="search" class="w-4 h-4"></i></button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Order Item -->
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Meja 05</p>
+                        <h4 class="font-black text-lg">Budi Sudarsono</h4>
+                        <p class="text-lime-600 font-bold text-sm">Rp 125.000</p>
+                    </div>
+                    <button class="bg-lime-100 text-lime-600 px-6 py-2 rounded-xl font-bold text-sm">Bayar</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right: Checkout Sidebar -->
+        <aside class="w-full lg:w-96 bg-white border-l border-slate-100 p-8 flex flex-col">
+            <h2 class="text-xl font-black mb-6 flex items-center gap-2"><i data-lucide="shopping-bag" class="text-lime-600"></i> Pembayaran</h2>
+            
+            <div class="flex-1 space-y-4">
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+                    <span class="text-sm font-bold text-slate-500">Subtotal</span>
+                    <span class="font-black">Rp 125.000</span>
+                </div>
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+                    <span class="text-sm font-bold text-slate-500">Pajak (10%)</span>
+                    <span class="font-black">Rp 12.500</span>
+                </div>
+            </div>
+
+            <div class="pt-6 mt-6 border-t border-slate-50">
+                <div class="flex justify-between text-2xl font-black text-slate-900 mb-6">
+                    <span>Total</span>
+                    <span class="text-lime-600">Rp 137.500</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button class="py-3 border-2 border-slate-100 rounded-2xl font-bold text-slate-400 flex flex-col items-center gap-1">
+                        <i data-lucide="banknote"></i> TUNAI
+                    </button>
+                    <button class="py-3 border-2 border-lime-500 bg-lime-50 rounded-2xl font-bold text-lime-600 flex flex-col items-center gap-1">
+                        <i data-lucide="credit-card"></i> QRIS
+                    </button>
+                </div>
+
+                <button class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-lg shadow-xl">PROSES PEMBAYARAN</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
