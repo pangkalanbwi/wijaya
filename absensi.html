@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Pegawai - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-md">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-black text-slate-900">MEMBER AREA</h1>
+            <p class="text-lime-600 font-bold tracking-widest text-xs uppercase mt-2">RM Pangkalan Natural Resto</p>
+        </div>
+
+        <!-- Login Form First -->
+        <div id="login-container" class="bg-white p-8 rounded-[40px] shadow-xl border border-slate-100">
+            <h2 class="text-xl font-bold mb-6">Masuk Pegawai</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Email / Username</label>
+                    <input type="text" id="username" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Password</label>
+                    <input type="password" id="password" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-lime-500">
+                </div>
+                <button onclick="handleLogin()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-lg mt-4 transition hover:bg-slate-800">MASUK SEKARANG</button>
+            </div>
+            <a href="index.html" class="block text-center mt-6 text-sm text-slate-400">Kembali ke Beranda</a>
+        </div>
+
+        <!-- Attendance Panel (Hidden by default) -->
+        <div id="absensi-panel" class="hidden bg-white p-8 rounded-[40px] shadow-xl border border-slate-100">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-14 h-14 bg-lime-100 text-lime-600 rounded-full flex items-center justify-center font-bold text-xl">B</div>
+                <div>
+                    <h3 class="font-bold text-lg" id="staff-name">Budi Waiter</h3>
+                    <p class="text-xs text-slate-400 uppercase font-bold" id="staff-role">Waiters</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 rounded-3xl p-6 mb-8 text-center border border-dashed border-slate-200">
+                <p id="time-now" class="text-3xl font-black text-slate-800 mb-1">00:00:00</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Senin, 20 April 2026</p>
+            </div>
+
+            <div class="space-y-4">
+                <button onclick="submitAbsensi('MASUK')" id="btn-masuk" class="w-full py-5 bg-lime-600 text-white rounded-3xl font-black shadow-lg shadow-lime-100 flex items-center justify-center gap-3">
+                    <i data-lucide="log-in"></i> ABSEN MASUK
+                </button>
+                <button onclick="submitAbsensi('PULANG')" id="btn-pulang" class="w-full py-5 bg-slate-100 text-slate-400 rounded-3xl font-black flex items-center justify-center gap-3 cursor-not-allowed" disabled>
+                    <i data-lucide="log-out"></i> ABSEN PULANG
+                </button>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-4 gap-2">
+                <a href="koki.html" class="flex flex-col items-center gap-1 group">
+                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
+                        <i data-lucide="chef-hat" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[8px] font-bold uppercase">Koki</span>
+                </a>
+                <a href="kasir.html" class="flex flex-col items-center gap-1 group">
+                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[8px] font-bold uppercase">Kasir</span>
+                </a>
+                <a href="waiters.html" class="flex flex-col items-center gap-1 group">
+                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
+                        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[8px] font-bold uppercase">Waiter</span>
+                </a>
+                <a href="owner.html" class="flex flex-col items-center gap-1 group">
+                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[8px] font-bold uppercase">Owner</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const CONFIG = {
+            CENTER: { lat: -8.436816, lng: 114.194306 },
+            RADIUS: 100
+        };
+
+        function handleLogin() {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('absensi-panel').classList.remove('hidden');
+            startTime();
+        }
+
+        function startTime() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('time-now').innerText = now.toLocaleTimeString('id-ID');
+            }, 1000);
+        }
+
+        async function submitAbsensi(type) {
+            if (!navigator.geolocation) {
+                return alert("Browser tidak mendukung GPS.");
+            }
+
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const distance = getDistance(pos.coords.latitude, pos.coords.longitude, CONFIG.CENTER.lat, CONFIG.CENTER.lng);
+                
+                if (distance <= CONFIG.RADIUS) {
+                    alert(`Absen ${type} Berhasil! Jarak Anda: ${Math.round(distance)}m`);
+                    if (type === 'MASUK') {
+                        document.getElementById('btn-masuk').disabled = true;
+                        document.getElementById('btn-masuk').classList.replace('bg-lime-600', 'bg-slate-100');
+                        document.getElementById('btn-pulang').disabled = false;
+                        document.getElementById('btn-pulang').classList.replace('bg-slate-100', 'bg-red-600');
+                        document.getElementById('btn-pulang').classList.replace('text-slate-400', 'text-white');
+                    }
+                } else {
+                    alert(`Gagal! Anda berada di luar radius 100m (${Math.round(distance)}m). Silakan mendekat ke lokasi.`);
+                }
+            });
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+    </script>
+</body>
+</html>
