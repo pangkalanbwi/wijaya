@@ -16,7 +16,14 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card-glow:hover { box-shadow: 0 20px 25px -5px rgba(132, 204, 22, 0.1), 0 8px 10px -6px rgba(132, 204, 22, 0.1); }
-        input:focus, select:focus { outline: none; ring: 2px; ring-color: #84cc16; }
+        input:focus, select:focus, textarea:focus { outline: none; ring: 2px; ring-color: #84cc16; }
+        
+        /* Animasi Transisi Halaman */
+        .fade-in-up { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="antialiased flex h-screen overflow-hidden">
@@ -51,14 +58,14 @@
 
         <div class="p-6 border-t border-slate-100">
             <div class="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-lime-100 text-lime-600 rounded-xl flex items-center justify-center font-black">OP</div>
+                <div class="w-10 h-10 bg-lime-100 text-lime-600 rounded-xl flex items-center justify-center font-black shadow-inner shadow-lime-200/50">OP</div>
                 <div>
                     <p class="text-xs font-black text-slate-900 leading-none">Owner</p>
                     <p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Administrator</p>
                 </div>
             </div>
             <a href="index.html" class="flex items-center gap-2 text-xs font-bold text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
-                <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Sistem
             </a>
         </div>
     </aside>
@@ -72,15 +79,15 @@
                 <h2 id="tab-title" class="text-2xl font-black text-slate-900 uppercase">Dashboard Utama</h2>
                 <div class="flex items-center gap-2 mt-1">
                     <span class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span>
-                    <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Turbo Sync Aktif</p>
+                    <p id="sync-status" class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Turbo Sync Aktif</p>
                 </div>
             </div>
             <div class="flex gap-3 w-full md:w-auto">
                 <button onclick="syncData()" class="bg-white border border-slate-200 p-3 rounded-2xl text-slate-500 hover:text-lime-600 transition shadow-sm flex-1 md:flex-none flex justify-center">
                     <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                 </button>
-                <button class="bg-lime-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-lime-900/10 flex items-center justify-center gap-2 flex-1 md:flex-none">
-                    <i data-lucide="download" class="w-4 h-4"></i> Laporan PDF
+                <button onclick="exportToPDF()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg flex items-center justify-center gap-2 flex-1 md:flex-none hover:bg-lime-600 transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Cetak Laporan
                 </button>
             </div>
         </header>
@@ -89,37 +96,35 @@
         <div id="content-area">
             
             <!-- Dashboard View -->
-            <div id="view-dashboard" class="tab-content active space-y-8 animate-in fade-in duration-500">
+            <div id="view-dashboard" class="tab-content active space-y-8 fade-in-up">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
                         <div class="w-10 h-10 bg-lime-50 text-lime-600 rounded-xl flex items-center justify-center mb-4"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Laba Bersih</p>
-                        <h4 class="text-2xl font-black text-slate-900 mt-1">Rp 1.842.000</h4>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Laba Bersih Hari Ini</p>
+                        <h4 class="text-2xl font-black text-slate-900 mt-1" id="dash-profit">Rp 1.842.000</h4>
                         <p class="text-[10px] text-lime-600 font-bold mt-2">▲ 15% dari kemarin</p>
                     </div>
                     <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
                         <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4"><i data-lucide="shopping-cart" class="w-5 h-5"></i></div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transaksi</p>
-                        <h4 class="text-2xl font-black text-slate-900 mt-1">42 Bill</h4>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Transaksi</p>
+                        <h4 class="text-2xl font-black text-slate-900 mt-1" id="dash-sales">42 Bill</h4>
                         <p class="text-[10px] text-slate-400 font-bold mt-2">Avg. Rp 85.400/bill</p>
                     </div>
                     <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
                         <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4"><i data-lucide="package-search" class="w-5 h-5"></i></div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bahan Menipis</p>
-                        <h4 class="text-2xl font-black text-orange-600 mt-1">5 Item</h4>
-                        <p class="text-[10px] text-orange-400 font-bold mt-2">Segera belanja!</p>
+                        <h4 class="text-2xl font-black text-orange-600 mt-1" id="dash-low-stock">5 Item</h4>
+                        <p class="text-[10px] text-orange-400 font-bold mt-2">Re-order segera!</p>
                     </div>
                     <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
                         <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4"><i data-lucide="user-check" class="w-5 h-5"></i></div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Staff Masuk</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kehadiran Staff</p>
                         <h4 class="text-2xl font-black text-slate-900 mt-1">12 / 15</h4>
                         <p class="text-[10px] text-slate-400 font-bold mt-2">Absensi Terverifikasi</p>
                     </div>
                 </div>
 
-                <!-- Charts Row -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- FIXED CHART CONTAINER -->
                     <div class="lg:col-span-2 bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm h-[450px] flex flex-col">
                         <h5 class="font-black text-slate-900 mb-6 uppercase text-xs tracking-widest">Trend Penjualan (7 Hari)</h5>
                         <div class="flex-1 relative">
@@ -127,7 +132,10 @@
                         </div>
                     </div>
                     <div class="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col h-[450px]">
-                        <h5 class="font-black text-slate-900 mb-6 uppercase text-xs tracking-widest">Top Selling Menu</h5>
+                        <div class="flex justify-between items-center mb-6">
+                            <h5 class="font-black text-slate-900 uppercase text-xs tracking-widest">Top Selling Menu</h5>
+                            <i data-lucide="award" class="text-lime-500 w-4 h-4"></i>
+                        </div>
                         <div class="space-y-6 flex-1 overflow-y-auto no-scrollbar" id="top-menu-list">
                             <!-- Injected via JS -->
                         </div>
@@ -136,12 +144,12 @@
             </div>
 
             <!-- Menu Management View -->
-            <div id="view-menu" class="tab-content space-y-6 animate-in slide-in-from-bottom duration-500">
+            <div id="view-menu" class="tab-content space-y-6 fade-in-up">
                 <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
                     <div class="p-6 border-b flex justify-between items-center flex-wrap gap-4">
                         <div class="relative w-full md:w-64">
                             <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="text" placeholder="Cari menu..." class="w-full bg-slate-50 rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-lime-500 transition-all">
+                            <input type="text" placeholder="Cari menu..." oninput="searchData('menu', this.value)" class="w-full bg-slate-50 rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-lime-500 transition-all">
                         </div>
                         <button onclick="openModal('menu', 'Tambah Menu Baru')" class="bg-slate-900 text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-lime-600 transition-all">+ Tambah Menu</button>
                     </div>
@@ -152,7 +160,7 @@
                                 <th class="p-5">Nama Menu</th>
                                 <th class="p-5">Kategori</th>
                                 <th class="p-5">Harga Jual</th>
-                                <th class="p-5">HPP Est.</th>
+                                <th class="p-5">HPP Real-time</th>
                                 <th class="p-5">Status</th>
                                 <th class="p-5">Aksi</th>
                             </tr>
@@ -165,10 +173,13 @@
             </div>
 
             <!-- Inventory View -->
-            <div id="view-inventory" class="tab-content space-y-6 animate-in slide-in-from-bottom duration-500">
+            <div id="view-inventory" class="tab-content space-y-6 fade-in-up">
                 <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="p-6 border-b flex justify-between items-center">
-                        <h4 class="font-black text-slate-900 text-sm uppercase tracking-widest">Stok Bahan Baku</h4>
+                    <div class="p-6 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+                        <div class="relative w-full md:w-64">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" placeholder="Cari bahan..." oninput="searchData('inventory', this.value)" class="w-full bg-slate-50 rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-lime-500 transition-all">
+                        </div>
                         <button onclick="openModal('inventory', 'Input Belanja Bahan')" class="text-lime-600 text-[10px] font-black uppercase tracking-widest">+ Input Belanja</button>
                     </div>
                     <table class="w-full text-left">
@@ -190,20 +201,23 @@
             </div>
 
             <!-- Recipes View -->
-            <div id="view-recipes" class="tab-content space-y-6 animate-in slide-in-from-bottom duration-500">
+            <div id="view-recipes" class="tab-content space-y-6 fade-in-up">
                 <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Injected via JS -->
                 </div>
             </div>
 
             <!-- Sales Journal View -->
-            <div id="view-sales" class="tab-content space-y-6 animate-in slide-in-from-bottom duration-500">
+            <div id="view-sales" class="tab-content space-y-6 fade-in-up">
                 <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="p-6 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-                        <h4 class="font-black text-slate-900 text-sm uppercase tracking-widest">Log Transaksi</h4>
+                    <div class="p-6 border-b flex justify-between items-center bg-white sticky top-0 z-10 flex-wrap gap-4">
                         <div class="flex gap-2">
                             <button class="px-4 py-2 bg-lime-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-lime-100">Hari Ini</button>
                             <button class="px-4 py-2 bg-slate-50 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100">Bulan Ini</button>
+                        </div>
+                        <div class="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                            <input type="date" class="bg-transparent text-xs font-bold focus:outline-none">
                         </div>
                     </div>
                     <table class="w-full text-left">
@@ -225,29 +239,34 @@
             </div>
 
             <!-- Settings View -->
-            <div id="view-settings" class="tab-content space-y-6 animate-in slide-in-from-bottom duration-500">
-                <div class="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
-                        <h4 class="text-lg font-black uppercase tracking-widest">Konfigurasi App</h4>
-                        <div class="space-y-4">
+            <div id="view-settings" class="tab-content space-y-6 fade-in-up">
+                <div class="max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
+                        <h4 class="text-lg font-black uppercase tracking-widest">Konfigurasi Sistem</h4>
+                        <div class="space-y-6">
                             <div>
                                 <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Google Script URL</label>
-                                <input type="text" id="config-gas-url" value="https://script.google.com/macros/s/AKfycb..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-semibold">
+                                <input type="text" id="config-gas-url" value="https://script.google.com/macros/s/AKfycb..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-semibold focus:ring-lime-500/20">
                             </div>
-                            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
-                                <div><p class="text-xs font-black">Sync Otomatis</p><p class="text-[9px] text-slate-400 font-bold uppercase">Update data setiap 5 menit</p></div>
-                                <div class="w-10 h-5 bg-lime-500 rounded-full relative cursor-pointer"><div class="w-3 h-3 bg-white rounded-full absolute right-1 top-1 shadow-sm"></div></div>
+                            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center transition-all hover:bg-slate-100">
+                                <div><p class="text-xs font-black">Notifikasi Struk WhatsApp</p><p class="text-[9px] text-slate-400 font-bold uppercase">Kirim otomatis saat bayar</p></div>
+                                <button onclick="this.classList.toggle('bg-lime-500'); this.querySelector('div').classList.toggle('right-1'); this.querySelector('div').classList.toggle('left-1');" class="w-10 h-5 bg-slate-200 rounded-full relative cursor-pointer transition-all duration-300">
+                                    <div class="w-3 h-3 bg-white rounded-full absolute left-1 top-1 shadow-sm transition-all duration-300"></div>
+                                </button>
                             </div>
                         </div>
-                        <button class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest">Update Konfigurasi</button>
+                        <button onclick="saveSettings()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-lime-600 transition-all">Simpan Konfigurasi</button>
                     </div>
 
                     <div class="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
-                        <h4 class="text-lg font-black uppercase tracking-widest">Akses Staff</h4>
-                        <div id="staff-list-container" class="space-y-3">
-                            <!-- Staff list via JS -->
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-black uppercase tracking-widest">Manajemen Staff</h4>
+                            <i data-lucide="users" class="text-slate-400 w-5 h-5"></i>
                         </div>
-                        <button class="w-full py-4 bg-white border-2 border-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-lime-500 hover:text-lime-600 transition-all">+ Tambah Pegawai</button>
+                        <div id="staff-list-container" class="space-y-3">
+                            <!-- Injected via JS -->
+                        </div>
+                        <button onclick="openModal('staff', 'Registrasi Staff Baru')" class="w-full py-4 bg-white border-2 border-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-lime-500 hover:text-lime-600 transition-all">+ Tambah Akun Pegawai</button>
                     </div>
                 </div>
             </div>
@@ -270,9 +289,9 @@
         // --- DATA CENTRAL (STATE) ---
         let STORE = {
             menus: [
-                { id: 'M01', name: 'Ayam Goreng Pangkalan', cat: 'MAKANAN', price: 25000, hpp: 12450, status: 'Aktif', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200' },
-                { id: 'M02', name: 'Nasi Goreng Spesial', cat: 'MAKANAN', price: 20000, hpp: 9800, status: 'Aktif', img: 'https://images.unsplash.com/photo-1512058560366-cd24295979f4?auto=format&fit=crop&q=80&w=200' },
-                { id: 'M03', name: 'Es Jeruk Nipis Madu', cat: 'MINUMAN', price: 8000, hpp: 2100, status: 'Aktif', img: 'https://images.unsplash.com/photo-1544145945-f904253db0ad?auto=format&fit=crop&q=80&w=200' }
+                { id: 'M01', name: 'Ayam Goreng Pangkalan', cat: 'MAKANAN', price: 25000, status: 'Aktif', img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200' },
+                { id: 'M02', name: 'Nasi Goreng Spesial', cat: 'MAKANAN', price: 20000, status: 'Aktif', img: 'https://images.unsplash.com/photo-1512058560366-cd24295979f4?auto=format&fit=crop&q=80&w=200' },
+                { id: 'M03', name: 'Es Jeruk Nipis Madu', cat: 'MINUMAN', price: 8000, status: 'Aktif', img: 'https://images.unsplash.com/photo-1544145945-f904253db0ad?auto=format&fit=crop&q=80&w=200' }
             ],
             inventory: [
                 { id: 'I01', name: 'Ayam Potong Broiler', cat: 'DAGING', stock: 45.5, unit: 'Kg', cost: 34000, alert: 10 },
@@ -281,14 +300,30 @@
             ],
             sales: [
                 { id: 'ORD-001', time: '14:20', table: '05', total: 125000, profit: 54000, method: 'QRIS' },
-                { id: 'ORD-002', time: '14:45', table: '12', total: 84500, profit: 32000, method: 'TUNAI' }
+                { id: 'ORD-002', time: '14:45', table: '12', total: 84500, profit: 32000, method: 'TUNAI' },
+                { id: 'ORD-003', time: '15:10', table: '02', total: 150000, profit: 68000, method: 'TUNAI' }
             ],
             staff: [
-                { name: 'Budi Sudarsono', role: 'Waiters', status: 'Online' },
-                { name: 'Siti Aminah', role: 'Koki', status: 'Online' },
-                { name: 'Ahmad Kasir', role: 'Kasir', status: 'Offline' }
-            ]
+                { id: 'S01', name: 'Budi Sudarsono', role: 'Waiters', status: 'Online' },
+                { id: 'S02', name: 'Siti Aminah', role: 'Koki', status: 'Online' },
+                { id: 'S03', name: 'Ahmad Kasir', role: 'Kasir', status: 'Offline' }
+            ],
+            recipes: [
+                { menu_id: 'M01', ingredients: [{ id: 'I01', qty: 0.25 }, { id: 'I02', qty: 0.1 }] },
+                { menu_id: 'M02', ingredients: [{ id: 'I03', qty: 0.2 }, { id: 'I02', qty: 0.05 }] }
+            ],
+            filters: { menu: '', inventory: '' }
         };
+
+        // --- CORE CALCULATIONS ---
+        function calculateHPP(menuId) {
+            const recipe = STORE.recipes.find(r => r.menu_id === menuId);
+            if (!recipe) return 0;
+            return recipe.ingredients.reduce((total, ing) => {
+                const material = STORE.inventory.find(i => i.id === ing.id);
+                return total + (material ? material.cost * ing.qty : 0);
+            }, 0);
+        }
 
         // --- NAVIGATION ---
         function switchTab(tab) {
@@ -358,67 +393,93 @@
             });
 
             const topList = document.getElementById('top-menu-list');
-            topList.innerHTML = STORE.menus.slice(0, 3).map((m, i) => `
+            topList.innerHTML = STORE.menus.slice(0, 4).map((m, i) => `
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-white hover:border-lime-100 transition-all">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-white rounded-xl overflow-hidden border border-slate-100"><img src="${m.img}" class="w-full h-full object-cover"></div>
                         <div><p class="text-[11px] font-black text-slate-800">${m.name}</p><p class="text-[9px] text-slate-400 font-bold uppercase">${m.cat}</p></div>
                     </div>
-                    <span class="text-xs font-black text-lime-600">${100 - (i*20)} Bill</span>
+                    <span class="text-xs font-black text-lime-600">${100 - (i*15)} Bill</span>
                 </div>
             `).join('');
         }
 
         function renderMenuTable() {
             const body = document.getElementById('menu-table-body');
-            body.innerHTML = STORE.menus.map(m => `
-                <tr class="border-b last:border-0 hover:bg-slate-50 transition-all group">
-                    <td class="p-5"><div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm"><img src="${m.img}" class="w-full h-full object-cover"></div></td>
-                    <td class="p-5 font-black text-slate-800 text-xs">${m.name}</td>
-                    <td class="p-5"><span class="px-2 py-1 bg-slate-100 rounded-lg text-[9px] font-bold text-slate-500 uppercase">${m.cat}</span></td>
-                    <td class="p-5 font-black text-slate-900 text-xs">Rp ${m.price.toLocaleString('id-ID')}</td>
-                    <td class="p-5 font-bold text-lime-600 text-xs italic">Rp ${m.hpp.toLocaleString('id-ID')}</td>
-                    <td class="p-5"><span class="flex items-center gap-2 text-[10px] font-black text-lime-600 uppercase"><span class="w-1.5 h-1.5 bg-lime-500 rounded-full"></span> ${m.status}</span></td>
-                    <td class="p-5">
-                        <button onclick="editMenu('${m.id}')" class="text-slate-300 hover:text-slate-900 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+            const filtered = STORE.menus.filter(m => m.name.toLowerCase().includes(STORE.filters.menu.toLowerCase()));
+            
+            body.innerHTML = filtered.map(m => {
+                const hpp = calculateHPP(m.id);
+                return `
+                    <tr class="border-b last:border-0 hover:bg-slate-50 transition-all group">
+                        <td class="p-5"><div class="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 shadow-sm"><img src="${m.img}" class="w-full h-full object-cover"></div></td>
+                        <td class="p-5 font-black text-slate-800 text-xs">${m.name}</td>
+                        <td class="p-5"><span class="px-2 py-1 bg-slate-100 rounded-lg text-[9px] font-bold text-slate-500 uppercase">${m.cat}</span></td>
+                        <td class="p-5 font-black text-slate-900 text-xs">Rp ${m.price.toLocaleString('id-ID')}</td>
+                        <td class="p-5 font-bold text-lime-600 text-xs italic">Rp ${hpp.toLocaleString('id-ID')}</td>
+                        <td class="p-5"><span class="flex items-center gap-2 text-[10px] font-black text-lime-600 uppercase"><span class="w-1.5 h-1.5 bg-lime-500 rounded-full"></span> ${m.status}</span></td>
+                        <td class="p-5">
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                 <button onclick="editMenu('${m.id}')" class="text-slate-300 hover:text-slate-900 transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                 <button onclick="deleteMenu('${m.id}')" class="text-slate-300 hover:text-red-500 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            if(filtered.length === 0) body.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-400 text-xs italic">Menu tidak ditemukan</td></tr>';
+            lucide.createIcons();
         }
 
         function renderInventoryTable() {
             const table = document.getElementById('inventory-table-body');
-            table.innerHTML = STORE.inventory.map(item => `
+            const filtered = STORE.inventory.filter(i => i.name.toLowerCase().includes(STORE.filters.inventory.toLowerCase()));
+            
+            table.innerHTML = filtered.map(item => `
                 <tr class="border-b last:border-0 hover:bg-slate-50 transition-all">
                     <td class="p-5 font-black text-slate-800 text-xs">${item.name}</td>
                     <td class="p-5 font-bold text-[10px] text-slate-400 uppercase tracking-tighter">${item.cat}</td>
                     <td class="p-5 text-center font-black text-slate-700 text-xs ${item.stock <= item.alert ? 'text-red-600' : ''}">${item.stock}</td>
                     <td class="p-5 font-bold text-slate-400 text-[10px] uppercase tracking-widest">${item.unit}</td>
                     <td class="p-5 font-bold text-slate-500 text-xs italic">Rp ${item.cost.toLocaleString('id-ID')}</td>
-                    <td class="p-5"><button onclick="editInventory('${item.id}')" class="p-2 bg-slate-50 rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-all"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button></td>
+                    <td class="p-5">
+                        <div class="flex gap-2">
+                             <button onclick="editInventory('${item.id}')" class="p-2 bg-slate-50 rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-all"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                             <button onclick="deleteInventory('${item.id}')" class="p-2 bg-slate-50 rounded-lg text-slate-400 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </td>
                 </tr>
             `).join('');
+            lucide.createIcons();
         }
 
         function renderRecipeGrid() {
             const grid = document.getElementById('recipe-grid');
-            grid.innerHTML = STORE.menus.map(m => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:border-lime-500 transition-all">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden border"><img src="${m.img}" class="w-full h-full object-cover"></div>
-                        <div class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">HPP Est.</p><h5 class="text-base font-black text-lime-600">Rp ${m.hpp.toLocaleString('id-ID')}</h5></div>
+            grid.innerHTML = STORE.menus.map(m => {
+                const recipe = STORE.recipes.find(r => r.menu_id === m.id);
+                const hpp = calculateHPP(m.id);
+                const hasRecipe = recipe && recipe.ingredients.length > 0;
+                
+                return `
+                    <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:border-lime-500 transition-all group">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden border group-hover:border-lime-200 transition-all"><img src="${m.img}" class="w-full h-full object-cover"></div>
+                            <div class="text-right"><p class="text-[9px] font-bold text-slate-400 uppercase">HPP Menu</p><h5 class="text-base font-black text-lime-600">Rp ${hpp.toLocaleString('id-ID')}</h5></div>
+                        </div>
+                        <h4 class="font-black text-slate-900 text-sm mb-4 line-clamp-1">${m.name}</h4>
+                        <div class="space-y-2 mb-6 min-h-[50px]">
+                            ${hasRecipe ? recipe.ingredients.map(ing => {
+                                const raw = STORE.inventory.find(i => i.id === ing.id);
+                                return `<div class="flex justify-between text-[10px] font-bold text-slate-500 italic"><span>${ing.qty}${raw ? raw.unit : ''} ${raw ? raw.name : 'Unknown'}</span><span>Rp ${(raw ? ing.qty * raw.cost : 0).toLocaleString('id-ID')}</span></div>`;
+                            }).join('') : '<p class="text-[10px] text-slate-300 italic">Resep belum diatur</p>'}
+                        </div>
+                        <div class="pt-4 border-t border-slate-50 flex justify-between items-end">
+                            <div><p class="text-[8px] font-bold text-slate-400 uppercase">Profit / Bill</p><p class="font-black text-slate-900">Rp ${(m.price - hpp).toLocaleString('id-ID')}</p></div>
+                            <button onclick="editRecipe('${m.id}')" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-lime-600 transition-all">Atur Resep</button>
+                        </div>
                     </div>
-                    <h4 class="font-black text-slate-900 text-sm mb-4 line-clamp-1">${m.name}</h4>
-                    <div class="space-y-2 mb-6">
-                        <div class="flex justify-between text-[10px] font-bold text-slate-400"><span>Food Cost (80%)</span><span>Rp ${Math.round(m.hpp*0.8).toLocaleString('id-ID')}</span></div>
-                        <div class="flex justify-between text-[10px] font-bold text-slate-400"><span>Ops Cost (20%)</span><span>Rp ${Math.round(m.hpp*0.2).toLocaleString('id-ID')}</span></div>
-                    </div>
-                    <div class="pt-4 border-t border-slate-50 flex justify-between items-end">
-                        <div><p class="text-[8px] font-bold text-slate-400 uppercase">Margin Laba</p><p class="font-black text-slate-900">Rp ${(m.price - m.hpp).toLocaleString('id-ID')}</p></div>
-                        <button class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Detail Resep</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderSalesTable() {
@@ -438,17 +499,28 @@
         function renderStaffList() {
             const list = document.getElementById('staff-list-container');
             list.innerHTML = STORE.staff.map(s => `
-                <div class="flex items-center justify-between p-4 bg-slate-50 border border-white rounded-2xl">
+                <div class="flex items-center justify-between p-4 bg-slate-50 border border-white rounded-2xl hover:bg-white hover:border-lime-100 transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center font-bold text-[10px] uppercase text-slate-400">${s.name.charAt(0)}</div>
+                        <div class="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center font-bold text-[10px] uppercase text-slate-400 group-hover:text-lime-600">${s.name.charAt(0)}</div>
                         <div><p class="text-xs font-black text-slate-800">${s.name}</p><p class="text-[8px] font-bold text-slate-400 uppercase">${s.role}</p></div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full ${s.status === 'Online' ? 'bg-lime-500 animate-pulse' : 'bg-slate-300'}"></span>
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">${s.status}</span>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full ${s.status === 'Online' ? 'bg-lime-500 animate-pulse' : 'bg-slate-300'}"></span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase">${s.status}</span>
+                        </div>
+                        <button onclick="deleteStaff('${s.id}')" class="text-slate-200 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                     </div>
                 </div>
             `).join('');
+            lucide.createIcons();
+        }
+
+        // --- SEARCH ACTIONS ---
+        function searchData(type, val) {
+            STORE.filters[type] = val;
+            if(type === 'menu') renderMenuTable();
+            if(type === 'inventory') renderInventoryTable();
         }
 
         // --- MODAL & CRUD LOGIC ---
@@ -459,24 +531,32 @@
             if (type === 'menu') {
                 body.innerHTML = `
                     <div class="space-y-4">
-                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Nama Menu</label><input id="m-name" type="text" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
+                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Nama Menu</label><input id="m-name" type="text" placeholder="Misal: Salad Natural" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Kategori</label><select id="m-cat" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-bold"><option>MAKANAN</option><option>MINUMAN</option><option>CAMILAN</option></select></div>
-                            <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Harga Jual</label><input id="m-price" type="number" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
+                            <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Harga Jual (Rp)</label><input id="m-price" type="number" placeholder="25000" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
                         </div>
-                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">URL Gambar</label><input id="m-img" type="text" placeholder="https://..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-semibold"></div>
-                        <button onclick="saveMenu()" class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl mt-4">Simpan Menu Baru</button>
+                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Drive Image ID</label><input id="m-img" type="text" placeholder="1yqG7..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-semibold"></div>
+                        <button onclick="saveMenu()" class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl mt-4">Simpan Menu</button>
                     </div>
                 `;
             } else if (type === 'inventory') {
                 body.innerHTML = `
                     <div class="space-y-4">
-                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Nama Bahan Baku</label><input id="i-name" type="text" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
+                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Nama Bahan</label><input id="i-name" type="text" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
                         <div class="grid grid-cols-3 gap-4">
-                            <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Unit</label><select id="i-unit" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-bold"><option>Kg</option><option>L</option><option>Ikat</option><option>Pcs</option></select></div>
-                            <div class="col-span-2"><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Harga / Unit</label><input id="i-cost" type="number" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
+                            <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Unit</label><select id="i-unit" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-bold"><option>Kg</option><option>Liter</option><option>Gram</option><option>Pcs</option></select></div>
+                            <div class="col-span-2"><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Harga Beli / Unit</label><input id="i-cost" type="number" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
                         </div>
-                        <button onclick="saveInventory()" class="w-full py-5 bg-lime-600 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl mt-4">Rekam Belanja</button>
+                        <button onclick="saveInventory()" class="w-full py-5 bg-lime-600 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl mt-4">Rekam Stok</button>
+                    </div>
+                `;
+            } else if (type === 'staff') {
+                body.innerHTML = `
+                    <div class="space-y-4">
+                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Nama Staff</label><input id="s-name" type="text" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-sm"></div>
+                        <div><label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">Role</label><select id="s-role" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-xs font-bold"><option>WAITERS</option><option>KOKI</option><option>KASIR</option></select></div>
+                        <button onclick="saveStaff()" class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl mt-4">Buat Akun</button>
                     </div>
                 `;
             }
@@ -484,82 +564,146 @@
             document.getElementById('modal-container').classList.remove('hidden');
         }
 
+        // --- CRUD ACTIONS ---
         function saveMenu() {
             const name = document.getElementById('m-name').value;
             const price = parseInt(document.getElementById('m-price').value) || 0;
             const cat = document.getElementById('m-cat').value;
-            const img = document.getElementById('m-img').value || 'https://via.placeholder.com/200';
+            const imgId = document.getElementById('m-img').value;
+            const imgUrl = imgId ? `https://lh3.googleusercontent.com/d/${imgId}` : 'https://via.placeholder.com/200';
             
-            if (!name || price <= 0) return alert("Mohon lengkapi data!");
+            if (!name || price <= 0) return alert("Data menu tidak lengkap!");
 
-            STORE.menus.push({
-                id: 'M0' + (STORE.menus.length + 1),
-                name, cat, price, 
-                hpp: Math.round(price * 0.45), 
-                status: 'Aktif', img
-            });
+            const id = 'M0' + (STORE.menus.length + 1);
+            STORE.menus.push({ id, name, cat, price, status: 'Aktif', img: imgUrl });
+            STORE.recipes.push({ menu_id: id, ingredients: [] });
 
             closeModal();
-            switchTab('menu');
-            alert("Menu berhasil ditambahkan!");
+            renderTab('menu');
+        }
+
+        function deleteMenu(id) {
+            if(confirm('Hapus menu ini?')) {
+                STORE.menus = STORE.menus.filter(m => m.id !== id);
+                renderTab('menu');
+            }
         }
 
         function saveInventory() {
             const name = document.getElementById('i-name').value;
             const cost = parseInt(document.getElementById('i-cost').value) || 0;
             const unit = document.getElementById('i-unit').value;
-            
-            if (!name || cost <= 0) return alert("Mohon lengkapi data!");
+            if (!name || cost <= 0) return;
 
-            STORE.inventory.push({
-                id: 'I0' + (STORE.inventory.length + 1),
-                name, cat: 'UMUM', stock: 0, unit, cost, alert: 5
-            });
-
-            closeModal();
-            switchTab('inventory');
-            alert("Bahan Baku berhasil didaftarkan!");
-        }
-
-        function editInventory(id) {
-            const item = STORE.inventory.find(i => i.id === id);
-            openModal('inventory', 'Update Stok: ' + item.name);
-            const body = document.getElementById('modal-body');
-            body.innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center">
-                        <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Stok Saat Ini</p>
-                        <h4 class="text-3xl font-black text-slate-900">${item.stock} ${item.unit}</h4>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block text-center">Tambah Stok Baru</label>
-                        <input id="i-add" type="number" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-black text-3xl text-center outline-none ring-2 ring-lime-500/10">
-                    </div>
-                    <button onclick="updateStock('${id}')" class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl mt-4 transition-all hover:bg-lime-600">Simpan Perubahan</button>
-                </div>
-            `;
-        }
-
-        function updateStock(id) {
-            const add = parseFloat(document.getElementById('i-add').value) || 0;
-            const item = STORE.inventory.find(i => i.id === id);
-            item.stock += add;
+            STORE.inventory.push({ id: 'I0' + (STORE.inventory.length + 1), name, cat: 'UMUM', stock: 0, unit, cost, alert: 5 });
             closeModal();
             renderTab('inventory');
-            alert("Stok berhasil diperbarui!");
+        }
+
+        function deleteInventory(id) {
+            if(confirm('Hapus bahan baku ini?')) {
+                STORE.inventory = STORE.inventory.filter(i => i.id !== id);
+                renderTab('inventory');
+            }
+        }
+
+        function saveStaff() {
+            const name = document.getElementById('s-name').value;
+            const role = document.getElementById('s-role').value;
+            if (!name) return;
+
+            STORE.staff.push({ id: 'S0' + (STORE.staff.length + 1), name, role, status: 'Offline' });
+            closeModal();
+            renderTab('settings');
+        }
+
+        function deleteStaff(id) {
+            if(confirm('Hapus staff ini?')) {
+                STORE.staff = STORE.staff.filter(s => s.id !== id);
+                renderTab('settings');
+            }
+        }
+
+        function editRecipe(menuId) {
+            const menu = STORE.menus.find(m => m.id === menuId);
+            const recipe = STORE.recipes.find(r => r.menu_id === menuId);
+            const hpp = calculateHPP(menuId);
+            
+            document.getElementById('modal-title').innerText = "Resep: " + menu.name;
+            const body = document.getElementById('modal-body');
+            
+            let html = `
+                <div class="space-y-6">
+                    <div class="p-4 bg-lime-50 rounded-2xl border border-lime-100 flex justify-between items-center">
+                         <div><p class="text-[10px] font-black text-lime-600 uppercase">HPP Terhitung</p><h4 class="text-xl font-black">Rp ${hpp.toLocaleString('id-ID')}</h4></div>
+                         <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase">Margin Laba</p><h4 class="text-xl font-black text-slate-900">Rp ${(menu.price-hpp).toLocaleString('id-ID')}</h4></div>
+                    </div>
+                    <div class="space-y-3">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Komposisi Bahan</p>
+                        ${recipe.ingredients.map(ing => {
+                            const raw = STORE.inventory.find(i => i.id === ing.id);
+                            return `
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div class="flex-1 font-bold text-xs">${raw ? raw.name : 'Unknown'}</div>
+                                    <div class="w-20"><input type="number" step="0.01" value="${ing.qty}" onchange="updateRecipeQty('${menuId}', '${ing.id}', this.value)" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-black text-center"></div>
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase">${raw ? raw.unit : ''}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Tambah Bahan Baru</p>
+                        <select onchange="addIngredientToRecipe('${menuId}', this.value)" class="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-xs font-bold">
+                            <option value="">Pilih Bahan dari Inventori...</option>
+                            ${STORE.inventory.filter(i => !recipe.ingredients.find(ri => ri.id === i.id)).map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('')}
+                        </select>
+                    </div>
+                    <button onclick="closeModal()" class="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl">Update Resep & Simpan</button>
+                </div>
+            `;
+            body.innerHTML = html;
+            document.getElementById('modal-container').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function addIngredientToRecipe(menuId, ingId) {
+            if(!ingId) return;
+            const recipe = STORE.recipes.find(r => r.menu_id === menuId);
+            recipe.ingredients.push({ id: ingId, qty: 0 });
+            editRecipe(menuId);
+        }
+
+        function updateRecipeQty(menuId, ingId, val) {
+            const recipe = STORE.recipes.find(r => r.menu_id === menuId);
+            const ing = recipe.ingredients.find(i => i.id === ingId);
+            if(ing) ing.qty = parseFloat(val) || 0;
+            // No need to re-render modal immediately to avoid losing focus, just update state
+        }
+
+        // --- UTILS ---
+        function syncData() {
+            const btnIcon = document.querySelector('header i[data-lucide="refresh-cw"]');
+            const statusTxt = document.getElementById('sync-status');
+            btnIcon.classList.add('animate-spin');
+            statusTxt.innerText = "SEDANG SINKRONISASI...";
+            
+            setTimeout(() => {
+                btnIcon.classList.remove('animate-spin');
+                statusTxt.innerText = "TURBO SYNC AKTIF";
+                alert("Data Berhasil Disinkronkan dengan Google Sheets!");
+                renderTab(document.querySelector('.nav-active').id.replace('nav-', ''));
+            }, 1200);
+        }
+
+        function exportToPDF() {
+            alert("Menyiapkan Laporan PDF untuk dicetak...");
+            window.print();
         }
 
         function closeModal() {
             document.getElementById('modal-container').classList.add('hidden');
-        }
-
-        function syncData() {
-            const icon = document.querySelector('header i[data-lucide="refresh-cw"]');
-            icon.classList.add('animate-spin');
-            setTimeout(() => {
-                icon.classList.remove('animate-spin');
-                alert("Turbo Sync: Seluruh data RM Pangkalan telah sinkron dengan Cloud!");
-            }, 1200);
+            // Refresh current tab UI if modal might have changed data
+            renderTab(document.querySelector('.nav-active').id.replace('nav-', ''));
         }
 
         window.onload = () => {
