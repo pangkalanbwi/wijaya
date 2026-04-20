@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Panel - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .nav-active { background-color: #f1f5f9; color: #84cc16; border-right: 4px solid #84cc16; }
+        
+        /* Mobile Adjustments */
+        @media (max-width: 1024px) {
+            .sidebar-mobile { transform: translateX(-100%); transition: transform 0.3s ease-in-out; position: fixed; z-index: 100; height: 100%; }
+            .sidebar-mobile.open { transform: translateX(0); }
+            .nav-active { border-right: none; border-left: 4px solid #84cc16; }
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card-glow:hover { box-shadow: 0 20px 25px -5px rgba(132, 204, 22, 0.1), 0 8px 10px -6px rgba(132, 204, 22, 0.1); }
+        input:focus, select:focus, textarea:focus { outline: none; ring: 2px; ring-color: #84cc16; }
+        
+        .fade-in-up { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translate(-50%, 100px); z-index: 200; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        .toast.show { transform: translate(-50%, 0); }
+
+        /* Floating Nav Mobile */
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; display: none; }
+        @media (max-width: 1024px) { .bottom-nav { display: flex; } }
+    </style>
+</head>
+<body class="antialiased flex h-screen overflow-hidden text-sm">
+
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[95] lg:hidden"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 w-max">
+        <i data-lucide="check-circle" class="text-lime-400 w-5 h-5"></i>
+        <span id="toast-msg">Pesan berhasil</span>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="main-sidebar" class="sidebar-mobile lg:translate-x-0 w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
+        <div class="p-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-black text-slate-900 leading-tight italic">Pangkalan.</h1>
+                <p class="text-[10px] font-bold text-lime-600 uppercase tracking-[0.2em]">Owner Panel</p>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden text-slate-400"><i data-lucide="x"></i></button>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-active w-full flex items-center gap-3 px-4 py-3 font-bold rounded-xl transition-all">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Ringkasan
+            </button>
+            <button onclick="switchTab('menu')" id="nav-menu" class="w-full flex items-center gap-3 px-4 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i data-lucide="utensils" class="w-4 h-4"></i> Kelola Menu
+            </button>
+            <button onclick="switchTab('inventory')" id="nav-inventory" class="w-full flex items-center gap-3 px-4 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i data-lucide="package" class="w-4 h-4"></i> Stok Bahan
+            </button>
+            <button onclick="switchTab('recipes')" id="nav-recipes" class="w-full flex items-center gap-3 px-4 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i data-lucide="book-open" class="w-4 h-4"></i> Resep & HPP
+            </button>
+            <button onclick="switchTab('staff')" id="nav-staff" class="w-full flex items-center gap-3 px-4 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i data-lucide="users" class="w-4 h-4"></i> Kelola Pegawai
+            </button>
+            <button onclick="switchTab('sales')" id="nav-sales" class="w-full flex items-center gap-3 px-4 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i data-lucide="scroll-text" class="w-4 h-4"></i> Jurnal Sales
+            </button>
+            <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all">
+                <i data-lucide="settings" class="w-4 h-4"></i> Pengaturan
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-slate-100">
+            <div class="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 mb-4 border border-white">
+                <div class="w-10 h-10 bg-lime-100 text-lime-600 rounded-xl flex items-center justify-center font-black shadow-sm">OP</div>
+                <div class="overflow-hidden">
+                    <p class="text-xs font-black text-slate-900 leading-none truncate">Owner RM</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase mt-1">Admin Mode</p>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="w-full flex items-center gap-2 text-xs font-bold text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 no-scrollbar relative">
+        <!-- Mobile Header Navigation -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <div>
+                    <h2 id="tab-title" class="text-xl md:text-2xl font-black text-slate-900 uppercase">Dashboard Utama</h2>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span id="sync-dot" class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span>
+                        <p id="sync-status" class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Turbo Sync Aktif</p>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden p-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-600">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+            
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="fetchDataFromServer()" class="bg-white border border-slate-200 p-3 rounded-2xl text-slate-500 hover:text-lime-600 transition shadow-sm flex-1 md:flex-none flex justify-center">
+                    <i data-lucide="refresh-cw" class="w-5 h-5" id="refresh-icon"></i>
+                </button>
+                <button onclick="window.print()" class="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-xs md:text-sm shadow-lg flex items-center justify-center gap-2 flex-[2] md:flex-none hover:bg-lime-600 transition-all">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Laporan
+                </button>
+            </div>
+        </header>
+
+        <div id="content-area">
+            <!-- DASHBOARD -->
+            <div id="view-dashboard" class="tab-content active space-y-6 md:space-y-8 fade-in-up">
+                <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" id="stat-grid">
+                    <div class="bg-white p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-lime-50 text-lime-600 rounded-xl flex items-center justify-center mb-3 md:mb-4"><i data-lucide="trending-up" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Profit Est.</p>
+                        <h4 class="text-lg md:text-2xl font-black text-slate-900 mt-1" id="dash-profit">Rp 0</h4>
+                    </div>
+                    <div class="bg-white p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-3 md:mb-4"><i data-lucide="shopping-cart" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transaksi</p>
+                        <h4 class="text-lg md:text-2xl font-black text-slate-900 mt-1" id="dash-sales">0 Bill</h4>
+                    </div>
+                    <div class="bg-white p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-3 md:mb-4"><i data-lucide="package-search" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bahan Limit</p>
+                        <h4 class="text-lg md:text-2xl font-black text-orange-600 mt-1" id="dash-low-stock">0 Item</h4>
+                    </div>
+                    <div class="bg-white p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-100 shadow-sm card-glow transition-all">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-3 md:mb-4"><i data-lucide="user-check" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">On-Duty</p>
+                        <h4 class="text-lg md:text-2xl font-black text-slate-900 mt-1" id="dash-staff">0 / 0</h4>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] border border-slate-100 shadow-sm h-[350px] md:h-[450px] flex flex-col">
+                        <h5 class="font-black text-slate-900 mb-6 uppercase text-xs tracking-widest">Tren Omset Mingguan</h5>
+                        <div class="flex-1 relative"><canvas id="salesChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] border border-slate-100 shadow-sm flex flex-col h-[350px] md:h-[450px]">
+                        <h5 class="font-black text-slate-900 mb-6 uppercase text-xs tracking-widest">Top Menu</h5>
+                        <div class="space-y-4 md:space-y-6 flex-1 overflow-y-auto no-scrollbar" id="top-menu-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MENU -->
+            <div id="view-menu" class="tab-content space-y-6 fade-in-up">
+                <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-4 md:p-6 border-b flex justify-between items-center bg-white sticky top-0 z-10 flex-wrap gap-4">
+                        <div class="relative w-full md:w-64">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" placeholder="Cari menu..." oninput="searchData('menu', this.value)" class="w-full bg-slate-50 rounded-xl pl-10 pr-4 py-3 text-xs focus:ring-2 focus:ring-lime-500/20 transition-all">
+                        </div>
+                        <button onclick="openModal('menu', 'Tambah Menu Baru')" class="bg-slate-900 text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-lime-600 transition-all w-full md:w-auto">+ Menu</button>
+                    </div>
+                    <div class="overflow-x-auto no-scrollbar">
+                        <table class="w-full text-left min-w-[700px]">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                                <tr><th class="p-5">Foto</th><th class="p-5">Menu</th><th class="p-5">Kategori</th><th class="p-5 text-right">Harga</th><th class="p-5 text-right">HPP</th><th class="p-5 text-center">Status</th><th class="p-5 text-center">Aksi</th></tr>
+                            </thead>
+                            <tbody id="menu-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INVENTORY -->
+            <div id="view-inventory" class="tab-content space-y-6 fade-in-up">
+                <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden text-slate-600">
+                    <div class="p-4 md:p-6 border-b flex justify-between items-center bg-white sticky top-0 z-10 flex-wrap gap-4">
+                        <h4 class="font-black text-slate-900 text-sm uppercase tracking-widest">Stok Bahan Baku</h4>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <input type="text" placeholder="Cari..." oninput="searchData('inventory', this.value)" class="flex-1 md:w-48 bg-slate-50 rounded-lg px-4 py-2 text-xs">
+                            <button onclick="openModal('inventory', 'Rekam Belanja Bahan')" class="bg-lime-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-sm">+ Belanja</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto no-scrollbar">
+                        <table class="w-full text-left min-w-[600px]">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                                <tr><th class="p-5">Bahan</th><th class="p-5">Kategori</th><th class="p-5 text-center">Sisa Stok</th><th class="p-5 text-right">Harga /Unit</th><th class="p-5 text-center">Limit</th><th class="p-5 text-center">Aksi</th></tr>
+                            </thead>
+                            <tbody id="inventory-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAFF -->
+            <div id="view-staff" class="tab-content space-y-6 fade-in-up">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 space-y-4 md:space-y-6">
+                        <div class="bg-white p-6 md:p-8 rounded-[30px] md:rounded-[40px] border border-slate-100 shadow-sm">
+                            <h5 class="font-black text-slate-900 mb-6 uppercase text-xs tracking-widest">Akun Pegawai</h5>
+                            <div class="space-y-4">
+                                <input id="s-name" type="text" placeholder="Nama Lengkap" class="w-full bg-slate-50 border rounded-2xl px-5 py-3 font-bold">
+                                <select id="s-role" class="w-full bg-slate-50 border rounded-2xl px-5 py-3 font-bold"><option>WAITERS</option><option>KOKI</option><option>KASIR</option></select>
+                                <input id="s-pass" type="password" placeholder="Password" class="w-full bg-slate-50 border rounded-2xl px-5 py-3 font-bold">
+                                <button type="button" onclick="saveStaff()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest">Simpan Akun</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 bg-white rounded-[30px] md:rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b bg-white">
+                            <h5 class="font-black text-slate-900 uppercase text-xs tracking-widest">Daftar Akun Pegawai</h5>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[500px]">
+                                <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                                    <tr><th class="p-5">Nama</th><th class="p-5">Jabatan</th><th class="p-5 text-center">Status</th><th class="p-5 text-center">Aksi</th></tr>
+                                </thead>
+                                <tbody id="staff-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECIPES -->
+            <div id="view-recipes" class="tab-content space-y-6 fade-in-up">
+                <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-20"></div>
+            </div>
+
+            <!-- SALES -->
+            <div id="view-sales" class="tab-content space-y-6 fade-in-up">
+                <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto no-scrollbar">
+                        <table class="w-full text-left min-w-[600px]">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                                <tr><th class="p-5">Waktu</th><th class="p-5">ID Order</th><th class="p-5">Meja</th><th class="p-5 text-right">Total Bill</th><th class="p-5 text-right">Laba Est.</th></tr>
+                            </thead>
+                            <tbody id="sales-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="view-settings" class="tab-content space-y-6 fade-in-up">
+                <div class="bg-white p-8 rounded-[30px] md:rounded-[40px] border border-slate-100 shadow-sm max-w-2xl">
+                    <h4 class="text-lg font-black uppercase tracking-widest mb-6">Konfigurasi Sistem</h4>
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-black text-slate-400 uppercase block">Google Apps Script URL</label>
+                        <input type="text" id="gas-url-input" placeholder="https://script.google.com/..." class="w-full bg-slate-50 border rounded-2xl px-6 py-4 font-semibold text-xs">
+                        <button onclick="saveConfig()" class="w-full py-5 bg-slate-900 text-white rounded-[28px] font-black uppercase text-xs tracking-widest shadow-xl mt-4">Simpan Konfigurasi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Navigation Mobile (Floating Pill) -->
+    <div class="bottom-nav bg-slate-900/90 backdrop-blur-md px-6 py-3 rounded-full gap-8 shadow-2xl border border-white/10">
+        <button onclick="switchTab('dashboard')" class="text-white/60 hover:text-lime-400 transition-all"><i data-lucide="layout-dashboard"></i></button>
+        <button onclick="switchTab('menu')" class="text-white/60 hover:text-lime-400 transition-all"><i data-lucide="utensils"></i></button>
+        <button onclick="switchTab('inventory')" class="text-white/60 hover:text-lime-400 transition-all"><i data-lucide="package"></i></button>
+        <button onclick="switchTab('sales')" class="text-white/60 hover:text-lime-400 transition-all"><i data-lucide="scroll-text"></i></button>
+        <button onclick="toggleSidebar()" class="text-white/60 hover:text-lime-400 transition-all"><i data-lucide="more-horizontal"></i></button>
+    </div>
+
+    <script>
+        // --- CENTRAL STATE ---
+        let STORE = {
+            menus: [
+                { id: 'M01', nama: 'Ayam Goreng Pangkalan', kategori: 'MAKANAN', harga_jual: 25000, img_id: '1yqG7R0...', status: 'Aktif' },
+                { id: 'M02', nama: 'Healthy Salad', kategori: 'MAKANAN', harga_jual: 35000, img_id: '1yqG7R0...', status: 'Aktif' }
+            ],
+            inventory: [
+                { id: 'I01', nama: 'Ayam Potong', kategori_stok: 'DAGING', qty_sisa: 12.5, satuan: 'Kg', harga_beli: 34000, min_stok: 5 },
+                { id: 'I02', nama: 'Minyak Goreng', kategori_stok: 'MINYAK', qty_sisa: 8, satuan: 'L', harga_beli: 16500, min_stok: 2 }
+            ],
+            staff: [
+                { id: 'S01', nama: 'Budi Waiter', role: 'WAITERS', status: 'Online' },
+                { id: 'S02', nama: 'Siti Koki', role: 'KOKI', status: 'Offline' }
+            ],
+            sales: [
+                { id: 'ORD-001', time: '14:20', table: '05', total: 125000, profit: 54000 },
+                { id: 'ORD-002', time: '14:45', table: '12', total: 84500, profit: 32000 }
+            ],
+            recipes: [
+                { menu_id: 'M01', ingredients: [{ id: 'I01', qty: 0.25 }, { id: 'I02', qty: 0.1 }] }
+            ],
+            filters: { menu: '', inventory: '' }
+        };
+
+        const LOCAL_GAS_URL = localStorage.getItem('gas_url') || '';
+
+        // --- CORE UI ACTIONS ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('hidden');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('nav-active', 'text-slate-900'));
+            const activeNav = document.getElementById(`nav-${tab}`);
+            if(activeNav) activeNav.classList.add('nav-active');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active');
+            
+            const titles = { dashboard:'Ringkasan Bisnis', menu:'Manajemen Menu', inventory:'Gudang Bahan', recipes:'Resep & HPP', staff:'Daftar Pegawai', sales:'Jurnal Sales', settings:'App Config' };
+            document.getElementById('tab-title').innerText = titles[tab];
+            
+            if(window.innerWidth < 1024) {
+                const sidebar = document.getElementById('main-sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.remove('open');
+                overlay.classList.add('hidden');
+            }
+
+            renderTab(tab);
+            lucide.createIcons();
+        }
+
+        // --- CALCULATIONS & RENDERS ---
+        function calculateHPP(menuId) {
+            const recipe = STORE.recipes.find(r => r.menu_id === menuId);
+            if (!recipe) return 0;
+            return recipe.ingredients.reduce((total, ing) => {
+                const mat = STORE.inventory.find(i => i.id === ing.id);
+                return total + (mat ? mat.harga_beli * ing.qty : 0);
+            }, 0);
+        }
+
+        function renderTab(tab) {
+            if(tab === 'dashboard') renderDashboard();
+            if(tab === 'menu') renderMenu();
+            if(tab === 'inventory') renderInventory();
+            if(tab === 'staff') renderStaff();
+            if(tab === 'recipes') renderRecipes();
+            if(tab === 'sales') renderSales();
+        }
+
+        function renderDashboard() {
+            const totalProfit = STORE.sales.reduce((sum, s) => sum + s.profit, 0);
+            const lowStockCount = STORE.inventory.filter(i => i.qty_sisa <= i.min_stok).length;
+
+            document.getElementById('dash-profit').innerText = `Rp ${totalProfit.toLocaleString('id-ID')}`;
+            document.getElementById('dash-sales').innerText = `${STORE.sales.length} Bill`;
+            document.getElementById('dash-low-stock').innerText = `${lowStockCount} Item`;
+            document.getElementById('dash-staff').innerText = `${STORE.staff.filter(s => s.status === 'Online').length} / ${STORE.staff.length}`;
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (window.mySalesChart) window.mySalesChart.destroy();
+            window.mySalesChart = new Chart(ctx, {
+                type: 'line', data: { labels: ['Sen','Sel','Rab','Kam','Jum','Sab','Min'], datasets: [{ data: [120, 190, 150, 210, 280, 450, 390], borderColor: '#84cc16', tension: 0.4, fill: true, backgroundColor: 'rgba(132, 204, 22, 0.05)' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            document.getElementById('top-menu-list').innerHTML = STORE.menus.map(m => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-white">
+                    <div class="flex items-center gap-3">
+                        <img src="https://lh3.googleusercontent.com/d/${m.img_id}" onerror="this.src='https://via.placeholder.com/50'" class="w-8 h-8 rounded-lg object-cover">
+                        <p class="text-xs font-black text-slate-800 truncate w-32 md:w-auto">${m.nama}</p>
+                    </div>
+                    <span class="text-[10px] md:text-xs font-black text-lime-600">80x</span>
+                </div>
+            `).join('');
+        }
+
+        function renderMenu() {
+            const list = STORE.menus.filter(m => m.nama.toLowerCase().includes(STORE.filters.menu.toLowerCase()));
+            document.getElementById('menu-table-body').innerHTML = list.map(m => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-4 md:p-5"><img src="https://lh3.googleusercontent.com/d/${m.img_id}" onerror="this.src='https://via.placeholder.com/100'" class="w-10 h-10 rounded-xl object-cover border bg-white"></td>
+                    <td class="p-4 md:p-5 font-black text-slate-800">${m.nama}</td>
+                    <td class="p-4 md:p-5 uppercase text-slate-400 text-[9px] font-bold">${m.kategori}</td>
+                    <td class="p-4 md:p-5 text-right font-black text-xs">Rp ${m.harga_jual.toLocaleString('id-ID')}</td>
+                    <td class="p-4 md:p-5 text-right font-bold text-lime-600 italic text-xs">Rp ${calculateHPP(m.id).toLocaleString('id-ID')}</td>
+                    <td class="p-4 md:p-5 text-center"><span class="w-2 h-2 rounded-full inline-block ${m.status === 'Aktif' ? 'bg-lime-500' : 'bg-red-400'}"></span></td>
+                    <td class="p-4 md:p-5 text-center">
+                        <button onclick="deleteData('menu', '${m.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderInventory() {
+            const list = STORE.inventory.filter(i => i.nama.toLowerCase().includes(STORE.filters.inventory.toLowerCase()));
+            document.getElementById('inventory-table-body').innerHTML = list.map(i => `
+                <tr class="border-b hover:bg-slate-50 transition-all text-xs">
+                    <td class="p-5 font-black text-slate-800">${i.nama} <p class="text-[8px] text-slate-400 uppercase font-bold">${i.id}</p></td>
+                    <td class="p-5 font-bold text-slate-400 uppercase text-[9px]">${i.kategori_stok}</td>
+                    <td class="p-5 text-center font-black ${i.qty_sisa <= i.min_stok ? 'text-red-500 animate-pulse' : 'text-slate-700'}">${i.qty_sisa} ${i.satuan}</td>
+                    <td class="p-5 text-right font-bold text-slate-400">Rp ${i.harga_beli.toLocaleString('id-ID')}</td>
+                    <td class="p-5 text-center font-black text-slate-300 text-[10px] uppercase">${i.min_stok}</td>
+                    <td class="p-5 text-center">
+                        <button onclick="deleteData('inventory', '${i.id}')" class="p-2 text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderStaff() {
+            document.getElementById('staff-table-body').innerHTML = STORE.staff.map(s => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-5 font-black text-slate-800 text-xs">${s.nama}</td>
+                    <td class="p-5 font-bold text-slate-400 text-[10px] uppercase tracking-widest">${s.role}</td>
+                    <td class="p-5 text-center">
+                        <span class="px-2 py-1 ${s.status === 'Online' ? 'bg-lime-100 text-lime-700' : 'bg-slate-100 text-slate-400'} rounded-lg text-[9px] font-black uppercase tracking-tighter">${s.status}</span>
+                    </td>
+                    <td class="p-5 text-center">
+                        <button onclick="deleteData('staff', '${s.id}')" class="text-slate-200 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderRecipes() {
+            document.getElementById('recipe-grid').innerHTML = STORE.menus.map(m => {
+                const recipe = STORE.recipes.find(r => r.menu_id === m.id);
+                const hpp = calculateHPP(m.id);
+                return `
+                    <div class="bg-white p-6 rounded-[30px] border border-slate-100 shadow-sm card-glow transition-all group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div><h4 class="font-black text-slate-900 text-sm">${m.nama}</h4><p class="text-[9px] font-black text-lime-600 uppercase tracking-tighter">Profit: Rp ${(m.harga_jual - hpp).toLocaleString('id-ID')}</p></div>
+                            <span class="text-[9px] font-black bg-slate-900 text-white px-3 py-1 rounded-full uppercase">HPP: ${Math.round((hpp/m.harga_jual)*100) || 0}%</span>
+                        </div>
+                        <div class="space-y-1 mb-6 min-h-[40px]">
+                            ${recipe ? recipe.ingredients.map(ing => {
+                                const mat = STORE.inventory.find(i => i.id === ing.id);
+                                return `<div class="flex justify-between text-[9px] font-bold text-slate-400 italic"><span>${mat?.nama || '?'}</span><span>Rp ${(mat?.harga_beli * ing.qty || 0).toLocaleString('id-ID')}</span></div>`;
+                            }).join('') : '<p class="text-slate-300 italic text-[9px]">Belum diatur</p>'}
+                        </div>
+                        <button onclick="openRecipeModal('${m.id}')" class="w-full py-3 bg-slate-50 text-slate-500 rounded-2xl font-black text-[9px] uppercase hover:bg-lime-600 hover:text-white transition-all">Atur Komposisi</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSales() {
+            document.getElementById('sales-table-body').innerHTML = STORE.sales.map(s => `
+                <tr class="border-b hover:bg-slate-50 transition-all text-xs font-bold text-slate-500">
+                    <td class="p-5 text-slate-400 tracking-tighter text-[10px]">${s.time}</td>
+                    <td class="p-5 font-black text-slate-900 text-[10px]">${s.id}</td>
+                    <td class="p-5 uppercase text-[10px]">Meja ${s.table}</td>
+                    <td class="p-5 text-right font-black text-slate-900 text-[10px]">Rp ${s.total.toLocaleString('id-ID')}</td>
+                    <td class="p-5 text-right font-black text-lime-600 text-[10px]">Rp ${s.profit.toLocaleString('id-ID')}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- DATA ACTIONS ---
+        function saveConfig() {
+            const url = document.getElementById('gas-url-input').value;
+            localStorage.setItem('gas_url', url);
+            showToast("API Tersimpan!");
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function handleLogout() { if(confirm('Logout?')) window.location.href = 'index.html'; }
+        function closeModal() { document.getElementById('modal-container').classList.add('hidden'); }
+        function searchData(type, val) { STORE.filters[type] = val; renderTab(type); }
+
+        function deleteData(type, id) {
+            if (confirm('Hapus permanen?')) {
+                const key = type === 'menu' ? 'menus' : type === 'inventory' ? 'inventory' : 'staff';
+                STORE[key] = STORE[key].filter(i => i.id !== id);
+                renderTab(type);
+                showToast("Dihapus!");
+            }
+        }
+
+        function openModal(type, title) {
+            document.getElementById('modal-title').innerText = title;
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `<p class="text-center text-slate-400 py-10">Fitur Form Sedang Aktif...</p>`;
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+
+        window.onload = () => {
+            if (LOCAL_GAS_URL) document.getElementById('gas-url-input').value = LOCAL_GAS_URL;
+            switchTab('dashboard');
+        };
+    </script>
+</body>
+</html>
