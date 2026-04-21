@@ -2,151 +2,319 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beranda - RM Pangkalan Natural Resto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RM Pangkalan - Natural & Healthy Resto</title>
+    
+    <!-- Konfigurasi PWA -->
+    <meta name="theme-color" content="#84cc16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/84cc16/ffffff?text=RM">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfc; }
-        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: white; border-right: 1px solid #f0f0f0; }
-        .main-content { margin-left: 260px; min-height: 100vh; padding: 24px; }
-        .hero-banner { 
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1200');
-            background-size: cover; background-position: center;
-        }
-        @media (max-width: 1023px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; padding-bottom: 100px; }
-            .floating-pill { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50; }
-        }
-        .nav-link-active { background-color: #84cc16; color: white; border-radius: 12px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .hero-gradient {
+            background: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1200');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card-menu {
+            background: white;
+            border: 1px solid rgba(132, 204, 22, 0.05);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-menu:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05);
+        }
+
+        .category-pill { transition: all 0.3s ease; border: 1px solid transparent; }
+        .category-pill.active { background: #84cc16; color: white; border-color: #84cc16; box-shadow: 0 10px 15px -3px rgba(132, 204, 22, 0.2); }
+
+        .fade-in { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #sync-toast {
+            position: fixed; top: 20px; right: 20px; z-index: 100;
+            transform: translateX(120%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #sync-toast.show { transform: translateX(0); }
+
+        .floating-cart {
+            position: fixed; bottom: 100px; right: 24px; z-index: 60;
+            transform: scale(0); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .floating-cart.show { transform: scale(1); }
     </style>
 </head>
-<body class="antialiased text-slate-800">
+<body class="antialiased min-h-screen">
 
-    <!-- DESKTOP SIDEBAR -->
-    <aside class="sidebar p-6 flex flex-col no-print">
-        <div class="mb-10">
-            <h1 class="text-2xl font-bold text-slate-900 leading-tight">Pangkalan</h1>
-            <p class="text-[10px] tracking-[0.2em] font-bold text-lime-600 uppercase">Natural Resto</p>
+    <!-- Notifikasi Sinkronisasi -->
+    <div id="sync-toast" class="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10">
+        <div class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></div>
+        <span id="toast-text" class="text-[10px] font-black uppercase tracking-widest">Menu Terkoneksi Cloud</span>
+    </div>
+
+    <!-- Sidebar Desktop -->
+    <aside class="fixed left-0 top-0 bottom-0 w-72 bg-white border-r border-slate-100 p-8 hidden lg:flex flex-col z-50">
+        <div class="mb-12">
+            <h1 class="text-3xl font-black italic text-slate-900 tracking-tighter">Pangkalan.</h1>
+            <p class="text-[10px] font-extrabold text-lime-600 uppercase tracking-[0.3em] mt-2">Natural & Healthy</p>
         </div>
+        
+        <nav class="flex-1 space-y-2">
+            <a href="index.html" class="w-full flex items-center gap-4 px-6 py-4 bg-lime-50 text-lime-600 rounded-2xl font-bold transition-all">
+                <i data-lucide="home" class="w-5 h-5"></i> Beranda
+            </a>
+            <a href="order-online.html" class="w-full flex items-center gap-4 px-6 py-4 text-slate-400 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i> Pesan Online
+            </a>
+            <a href="absensi.html" class="w-full flex items-center gap-4 px-6 py-4 text-slate-400 hover:bg-slate-50 hover:text-slate-900 rounded-2xl font-bold transition-all">
+                <i data-lucide="user-check" class="w-5 h-5"></i> Area Staff
+            </a>
+        </nav>
 
-        <div class="flex-1 space-y-8">
-            <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Menu Utama</p>
-                <nav class="space-y-1">
-                    <a href="index.html" class="nav-link-active flex items-center gap-3 px-4 py-3 text-sm font-semibold">
-                        <i data-lucide="layout-grid" class="w-5 h-5"></i> Beranda
-                    </a>
-                    <a href="absensi.html" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition">
-                        <i data-lucide="user-check" class="w-5 h-5"></i> Area Pegawai
-                    </a>
-                </nav>
+        <div class="pt-8 border-t border-slate-50">
+            <div class="p-6 bg-slate-50 rounded-3xl">
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Buka Setiap Hari</p>
+                <p class="text-xs font-bold text-slate-700">09.00 - 21.00 WIB</p>
             </div>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-        <header class="flex items-center justify-between mb-8">
-            <div>
-                <h2 class="text-3xl font-extrabold text-slate-900">Beranda</h2>
-                <p class="text-xs text-slate-400 flex items-center gap-2" id="sync-status">
-                    <span class="w-2 h-2 bg-slate-300 rounded-full animate-pulse"></span> MENYIAPKAN MENU...
-                </p>
-            </div>
+    <!-- Konten Utama -->
+    <main class="lg:ml-72 pb-24">
+        
+        <!-- Navigasi Atas (Mobile) -->
+        <header class="p-6 flex lg:hidden justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-50">
+            <h1 class="text-2xl font-black italic text-slate-900">Pangkalan.</h1>
+            <button onclick="syncMenu()" class="p-3 bg-slate-50 rounded-xl text-slate-400 active:bg-slate-100 transition-colors">
+                <i data-lucide="refresh-cw" id="sync-icon"></i>
+            </button>
         </header>
 
-        <section class="hero-banner h-64 lg:h-96 rounded-[40px] relative overflow-hidden mb-10 flex items-center px-10">
-            <div class="max-w-md animate-in fade-in slide-in-from-left duration-700">
-                <p class="text-lime-400 font-bold text-sm mb-2 uppercase tracking-widest">Pilihan Nutrisi Terbaik</p>
-                <h3 class="text-4xl lg:text-6xl font-black text-white leading-tight mb-6 italic">RM Pangkalan <br><span class="text-lime-500">Natural Resto</span></h3>
-                <button onclick="document.getElementById('menu-section').scrollIntoView({behavior:'smooth'})" class="bg-lime-500 hover:bg-lime-600 text-white px-8 py-3 rounded-full font-bold flex items-center gap-2 transition shadow-xl shadow-lime-900/20">
-                    Lihat Menu <i data-lucide="arrow-down" class="w-4 h-4"></i>
-                </button>
+        <!-- Bagian Hero -->
+        <section class="p-6 md:p-10">
+            <div class="hero-gradient h-64 md:h-[400px] rounded-[40px] md:rounded-[60px] flex items-center px-8 md:px-16 relative overflow-hidden shadow-2xl shadow-lime-900/10">
+                <div class="max-w-xl fade-in">
+                    <span class="px-4 py-1.5 bg-lime-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">Menu Musim Baru</span>
+                    <h2 class="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight mt-6 italic">
+                        Nikmati Keajaiban <br><span class="text-lime-500">Rasa Alami.</span>
+                    </h2>
+                    <p class="text-slate-300 text-sm md:text-base mt-4 font-medium max-w-sm">Dibuat dengan bahan organik pilihan langsung dari kebun lokal Pangkalan.</p>
+                </div>
             </div>
         </section>
 
-        <div id="menu-section">
-            <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar pb-2" id="category-pills">
-                <button class="bg-lime-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg">SEMUA</button>
+        <!-- Eksplorasi Menu -->
+        <section class="p-6 md:p-10">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tighter uppercase">Eksplorasi Menu</h3>
+                    <p class="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest" id="menu-count">Memuat menu...</p>
+                </div>
+                
+                <div class="flex gap-2 overflow-x-auto no-scrollbar w-full lg:w-auto pb-4 lg:pb-0">
+                    <button onclick="filterCategory('ALL')" class="category-pill active px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white border border-slate-100 shadow-sm whitespace-nowrap">Semua</button>
+                    <button onclick="filterCategory('MAKANAN')" class="category-pill px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white border border-slate-100 text-slate-400 shadow-sm whitespace-nowrap">Makanan</button>
+                    <button onclick="filterCategory('SEGERAN')" class="category-pill px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white border border-slate-100 text-slate-400 shadow-sm whitespace-nowrap">Segeran</button>
+                    <button onclick="filterCategory('WEDANGAN')" class="category-pill px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white border border-slate-100 text-slate-400 shadow-sm whitespace-nowrap">Wedangan</button>
+                    <button onclick="filterCategory('CAMILAN')" class="category-pill px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white border border-slate-100 text-slate-400 shadow-sm whitespace-nowrap">Camilan</button>
+                </div>
             </div>
 
-            <div id="menu-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Data dari Cloud akan muncul di sini -->
+            <!-- Grid Menu -->
+            <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                <!-- Data dimuat dari cloud -->
+                <div class="animate-pulse bg-slate-100 h-64 rounded-[40px]"></div>
+                <div class="animate-pulse bg-slate-100 h-64 rounded-[40px]"></div>
+                <div class="animate-pulse bg-slate-100 h-64 rounded-[40px]"></div>
+                <div class="animate-pulse bg-slate-100 h-64 rounded-[40px]"></div>
             </div>
-        </div>
 
-        <div id="empty-state" class="hidden py-40 text-center flex flex-col items-center opacity-20">
-            <i data-lucide="search-x" class="w-16 h-16 mb-4"></i>
-            <p class="text-slate-500 font-bold uppercase tracking-widest text-sm italic">MENU BELUM TERSEDIA</p>
-        </div>
+            <!-- State Kosong -->
+            <div id="empty-state" class="hidden py-40 flex flex-col items-center justify-center opacity-20">
+                <i data-lucide="search-x" class="w-20 h-20 mb-4"></i>
+                <p class="text-xl font-black uppercase tracking-widest">Menu Tidak Ditemukan</p>
+            </div>
+        </section>
     </main>
 
-    <!-- MOBILE NAVIGATION PILL -->
-    <div class="lg:hidden floating-pill bg-white/80 backdrop-blur-lg border border-white/50 px-8 py-4 rounded-full flex gap-10 shadow-2xl items-center">
-        <a href="index.html" class="text-lime-600"><i data-lucide="home"></i></a>
-        <a href="absensi.html" class="text-slate-400"><i data-lucide="user"></i></a>
-    </div>
+    <!-- Floating Cart Button (Penyelamat dari Redirect Error) -->
+    <a href="order-online.html" id="floating-cart" class="floating-cart bg-slate-900 text-white p-5 rounded-[24px] shadow-2xl flex items-center gap-4 border border-white/20 active:scale-90 transition-all">
+        <div class="relative">
+            <i data-lucide="shopping-basket" class="w-7 h-7 text-lime-400"></i>
+            <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
+        </div>
+        <div class="pr-2">
+            <p class="text-[8px] font-black uppercase text-slate-400 tracking-widest">Lanjut Ke</p>
+            <p class="text-[10px] font-black uppercase tracking-tighter">Checkout Pesanan</p>
+        </div>
+    </a>
+
+    <!-- Navigasi Bawah (Hanya Mobile) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 p-5 flex justify-around items-center lg:hidden z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <a href="index.html" class="text-lime-600 flex flex-col items-center gap-1">
+            <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Beranda</span>
+        </a>
+        <a href="order-online.html" class="text-slate-300 flex flex-col items-center gap-1">
+            <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Pesanan</span>
+        </a>
+        <a href="absensi.html" class="text-slate-300 flex flex-col items-center gap-1">
+            <i data-lucide="user" class="w-6 h-6"></i>
+            <span class="text-[8px] font-black uppercase tracking-widest">Staff</span>
+        </a>
+    </nav>
 
     <script>
-        const gasUrl = localStorage.getItem('gas_url') || "";
+        // --- MESIN CLOUD ---
         let menus = [];
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbx3OAbYKkZRD-Gws1bGu4C1c58IAg9ZAHjkb1jSjaGISBT_03J7PX3BDUBV9vvo08W_/exec";
+        
+        if (!localStorage.getItem('gas_url')) {
+            localStorage.setItem('gas_url', DEFAULT_GAS_URL);
+        }
+        const gasUrl = localStorage.getItem('gas_url');
 
-        async function fetchMenu() {
-            if(!gasUrl) {
-                document.getElementById('sync-status').innerHTML = `<span class="text-red-500">⚠ API URL Belum Diatur Owner</span>`;
-                return;
-            }
-
+        async function syncMenu() {
+            const icon = document.getElementById('sync-icon');
+            if(icon) icon.classList.add('animate-spin');
+            
             try {
-                const response = await fetch(gasUrl);
+                const response = await fetch(`${gasUrl}?v=${Date.now()}`);
                 const result = await response.json();
+                
                 if(result.status === "success") {
-                    menus = result.data.menus;
+                    menus = result.data.menus.filter(m => m.status === 'Aktif');
                     renderMenu();
-                    document.getElementById('sync-status').innerHTML = `<span class="w-2 h-2 bg-lime-500 rounded-full"></span> MENU TERUPDATE`;
+                    showToast("Menu Terkoneksi Cloud");
+                    updateCartUI();
                 }
             } catch (err) {
-                console.error("Gagal mengambil menu:", err);
+                console.error("Gagal mengambil data:", err);
+                renderEmpty();
+            } finally {
+                if(icon) icon.classList.remove('animate-spin');
             }
         }
 
-        function renderMenu(filter = "SEMUA") {
-            const container = document.getElementById('menu-container');
-            const filtered = filter === "SEMUA" ? menus : menus.filter(m => m.kategori === filter);
+        function renderMenu(filter = "ALL") {
+            const grid = document.getElementById('menu-grid');
+            const empty = document.getElementById('empty-state');
+            if(!grid) return;
             
+            const filtered = filter === "ALL" ? menus : menus.filter(m => (m.kategori || "").toUpperCase() === filter);
+            
+            const countEl = document.getElementById('menu-count');
+            if(countEl) countEl.innerText = `${filtered.length} Hidangan Siap Saji`;
+
             if(filtered.length === 0) {
-                container.innerHTML = '';
-                document.getElementById('empty-state').classList.remove('hidden');
+                grid.innerHTML = '';
+                if(empty) empty.classList.remove('hidden');
                 return;
             }
 
-            document.getElementById('empty-state').classList.add('hidden');
-            container.innerHTML = filtered.map(m => `
-                <div class="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
-                    <div class="aspect-square bg-slate-50 rounded-[24px] mb-4 overflow-hidden relative shadow-inner">
-                        <img src="${m.img_id ? 'https://lh3.googleusercontent.com/d/'+m.img_id : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300'}" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            if(empty) empty.classList.add('hidden');
+            grid.innerHTML = filtered.map(m => `
+                <div class="card-menu p-4 md:p-6 flex flex-col animate-in fade-in duration-500">
+                    <div class="aspect-square rounded-[30px] md:rounded-[40px] overflow-hidden mb-5 bg-slate-50 relative group shadow-inner">
+                        <img src="${m.img_id ? 'https://lh3.googleusercontent.com/d/'+m.img_id : 'https://via.placeholder.com/400?text='+encodeURIComponent(m.nama)}" 
+                             alt="${m.nama}"
+                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                             onerror="this.src='https://via.placeholder.com/400?text=RM+Pangkalan'">
+                        <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black text-lime-600 uppercase shadow-sm">
+                            ${m.kategori}
+                        </div>
                     </div>
-                    <p class="text-[9px] font-black text-lime-600 uppercase tracking-widest mb-1">${m.kategori}</p>
-                    <h4 class="font-bold text-slate-800 line-clamp-1">${m.nama}</h4>
-                    <div class="flex justify-between items-center mt-3">
-                        <p class="text-slate-900 font-black">Rp ${parseInt(m.harga_jual).toLocaleString('id-ID')}</p>
-                        <a href="order-online.html" class="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-lime-600 transition">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </a>
+                    <div class="flex-1 px-1">
+                        <h4 class="font-black text-slate-900 text-sm md:text-base leading-tight uppercase line-clamp-2 tracking-tighter">${m.nama}</h4>
+                        <div class="mt-4 pt-4 border-t border-slate-50 flex justify-between items-center">
+                            <p class="text-lime-600 font-black text-sm md:text-lg tracking-tighter">Rp ${parseInt(m.harga_jual || 0).toLocaleString('id-ID')}</p>
+                            <button onclick="addToCart('${m.id}')" class="w-10 h-10 md:w-12 md:h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg hover:bg-lime-600 transition-all active:scale-90">
+                                <i data-lucide="plus" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
             lucide.createIcons();
         }
 
+        function filterCategory(cat) {
+            document.querySelectorAll('.category-pill').forEach(btn => {
+                const btnText = btn.innerText.toUpperCase();
+                const isActive = btnText === cat || (cat === 'ALL' && btnText === 'SEMUA');
+                btn.classList.toggle('active', isActive);
+                btn.classList.toggle('text-slate-400', !isActive);
+            });
+            renderMenu(cat);
+        }
+
+        function addToCart(id) {
+            let cart = JSON.parse(localStorage.getItem('user_cart')) || [];
+            const menu = menus.find(m => m.id === id);
+            
+            if(!menu) return;
+
+            const existing = cart.find(i => i.id === id);
+            if(existing) existing.qty += 1;
+            else cart.push({ id: menu.id, name: menu.nama, price: menu.harga_jual, qty: 1 });
+            
+            localStorage.setItem('user_cart', JSON.stringify(cart));
+            updateCartUI();
+            showToast(`${menu.nama} Ditambahkan!`);
+        }
+
+        function updateCartUI() {
+            const cart = JSON.parse(localStorage.getItem('user_cart')) || [];
+            const count = cart.reduce((acc, curr) => acc + curr.qty, 0);
+            
+            const floating = document.getElementById('floating-cart');
+            const cartCount = document.getElementById('cart-count');
+            
+            if(count > 0) {
+                if(floating) floating.classList.add('show');
+                if(cartCount) cartCount.innerText = count;
+            } else {
+                if(floating) floating.classList.remove('show');
+            }
+        }
+
+        function renderEmpty() {
+            const grid = document.getElementById('menu-grid');
+            if(grid) grid.innerHTML = '';
+            const empty = document.getElementById('empty-state');
+            if(empty) empty.classList.remove('hidden');
+            const countEl = document.getElementById('menu-count');
+            if(countEl) countEl.innerText = "Koneksi Bermasalah";
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('sync-toast');
+            const text = document.getElementById('toast-text');
+            if(text) text.innerText = msg;
+            if(t) {
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            }
+        }
+
         window.onload = () => {
-            fetchMenu();
+            syncMenu();
+            updateCartUI();
             lucide.createIcons();
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
         };
     </script>
 </body>
