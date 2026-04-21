@@ -38,7 +38,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        .table-pill { transition: all 0.2s ease; }
+        .table-pill { transition: all 0.2s ease; border: 2px solid #f1f5f9; }
         .table-pill.active { 
             background: #84cc16; 
             color: white; 
@@ -46,6 +46,7 @@
             transform: scale(1.1); 
             box-shadow: 0 10px 20px -5px rgba(132, 204, 22, 0.4);
         }
+        .table-occupied { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
 
         #auth-overlay { 
             background: radial-gradient(circle at top right, #f7fee7, #f0fdf4); 
@@ -113,7 +114,10 @@
         <section>
             <div class="flex justify-between items-end mb-4 px-2">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Pilih Nomor Meja</p>
-                <p class="text-[9px] font-bold text-lime-600 uppercase tracking-widest" id="selected-table-label">BELUM DIPILIH</p>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span><span class="text-[8px] font-bold text-slate-400 uppercase">Terisi</span></div>
+                    <p class="text-[9px] font-bold text-lime-600 uppercase tracking-widest" id="selected-table-label">BELUM DIPILIH</p>
+                </div>
             </div>
             <div id="table-grid" class="flex gap-4 overflow-x-auto no-scrollbar pb-4 px-2"></div>
         </section>
@@ -173,7 +177,7 @@
 
     <script>
         // --- DATA & STATE ENGINE ---
-        let STORE = JSON.parse(localStorage.getItem('pangkalan_store')) || { menus: [], staff: [], inventory: [] };
+        let STORE = JSON.parse(localStorage.getItem('pangkalan_store')) || { menus: [], staff: [], inventory: [], pending_orders: [], recipes: [] };
         let state = { 
             selectedTable: null, 
             cart: {}, // { menuId: { qty: 0, note: "" } }
@@ -192,8 +196,10 @@
                 const resp = await fetch(gasUrl);
                 const res = await resp.json();
                 if(res.status === 'success') {
+                    // Simpan data lama untuk merge atau timpa
                     STORE = {...STORE, ...res.data};
                     localStorage.setItem('pangkalan_store', JSON.stringify(STORE));
+                    renderTables();
                     renderMenus();
                     showToast("Sistem Sinkron!");
                 }
@@ -219,6 +225,9 @@
             lucide.createIcons();
             syncAll();
             
+            // Auto sync background setiap 60 detik
+            setInterval(syncAll, 60000);
+
             if(state.staff) {
                 document.getElementById('auth-overlay').classList.add('hidden');
                 document.getElementById('staff-display').innerText = `WAITER: ${state.staff.nama}`;
@@ -227,11 +236,19 @@
 
         // --- UI RENDERING ---
         function renderTables() {
-            document.getElementById('table-grid').innerHTML = tables.map(t => `
-                <button onclick="selectTable('${t}')" id="table-${t}" class="table-pill min-w-[85px] h-[85px] rounded-[30px] bg-white border-2 border-slate-50 font-black text-slate-300 flex items-center justify-center text-lg shadow-sm transition-all">
-                    ${t}
-                </button>
-            `).join('');
+            const occupiedTables = STORE.pending_orders.filter(o => o.status !== 'DONE').map(o => String(o.table));
+            
+            document.getElementById('table-grid').innerHTML = tables.map(t => {
+                const isOccupied = occupiedTables.includes(String(t));
+                const activeClass = state.selectedTable === t ? 'active' : '';
+                const occupiedClass = isOccupied ? 'table-occupied' : '';
+                
+                return `
+                    <button onclick="selectTable('${t}')" id="table-${t}" class="table-pill min-w-[85px] h-[85px] rounded-[30px] bg-white font-black flex items-center justify-center text-lg shadow-sm transition-all ${activeClass} ${occupiedClass}">
+                        ${t}
+                    </button>
+                `;
+            }).join('');
         }
 
         function selectTable(num) {
@@ -249,6 +266,14 @@
             renderMenus();
         }
 
+        function checkStokLimit(menuId) {
+            const recipe = STORE.recipes.find(r => r.id_menu === menuId);
+            if(!recipe) return false;
+            const ingredient = STORE.inventory.find(i => i.id === recipe.id_bahan);
+            if(!ingredient) return false;
+            return parseFloat(ingredient.qty_sisa) <= parseFloat(ingredient.min_stok);
+        }
+
         function renderMenus() {
             const grid = document.getElementById('menu-grid');
             const search = document.getElementById('search-input').value.toLowerCase();
@@ -261,8 +286,11 @@
             
             grid.innerHTML = filtered.map(m => {
                 const itemInCart = state.cart[m.id] || { qty: 0 };
+                const isStokLow = checkStokLimit(m.id);
+                
                 return `
-                    <div class="card-menu p-5 flex flex-col shadow-xl shadow-slate-200/20 animate-in fade-in duration-500">
+                    <div class="card-menu p-5 flex flex-col shadow-xl shadow-slate-200/20 animate-in fade-in duration-500 relative">
+                        ${isStokLow ? `<span class="absolute top-4 right-4 z-10 bg-red-500 text-white text-[7px] font-black px-2 py-1 rounded-full uppercase tracking-tighter shadow-lg">Limit</span>` : ''}
                         <div class="aspect-square rounded-[30px] overflow-hidden mb-5 bg-slate-50 shadow-inner relative group">
                             <img src="${m.img_id ? 'https://lh3.googleusercontent.com/d/'+m.img_id : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300'}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                             <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -370,7 +398,7 @@
                         name: m.nama, 
                         qty: data.qty, 
                         price: parseInt(m.harga_jual),
-                        note: data.note // Catatan khusus per item
+                        note: data.note 
                     };
                 })
             };
@@ -382,12 +410,13 @@
                     showToast("Pesanan Diterima Dapur!");
                     resetTerminal();
                     closeReview();
+                    syncAll(); // Refresh meja setelah pesan
                 }
             } catch(e) { 
                 showToast("Koneksi Cloud Gagal!", "error"); 
             } finally { 
                 btn.disabled = false; 
-                btn.innerText = "Kirim Ke Cloud Pro"; 
+                btn.innerText = "Kirim Ke Dapur Pro"; 
             }
         }
 
