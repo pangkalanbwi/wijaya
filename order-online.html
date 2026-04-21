@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Online - RM Pangkalan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
+    </style>
+</head>
+<body class="antialiased text-slate-800 pb-20">
+
+    <div class="max-w-2xl mx-auto p-6 lg:p-12">
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl font-black text-slate-900 mb-2">CHECKOUT</h1>
+            <p class="text-lime-600 font-bold tracking-[0.3em] text-[10px] uppercase">Lengkapi Data Pesanan Anda</p>
+        </div>
+
+        <div class="bg-white rounded-[40px] shadow-2xl border border-slate-100 p-8 lg:p-10">
+            <form id="orderForm" class="space-y-8">
+                <!-- Data Pemesan -->
+                <div class="space-y-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Informasi Kontak</p>
+                    <input type="text" id="cust-name" placeholder="Nama Lengkap" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-lime-500 outline-none font-semibold">
+                    <input type="tel" id="cust-wa" placeholder="Nomor WhatsApp (Aktif)" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-lime-500 outline-none font-semibold">
+                </div>
+
+                <!-- Metode -->
+                <div class="space-y-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Metode Pesanan</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="method" value="Take Away" class="peer sr-only" checked>
+                            <div class="p-4 border-2 border-slate-100 rounded-2xl text-center font-bold text-slate-400 peer-checked:border-lime-500 peer-checked:bg-lime-50 peer-checked:text-lime-600 transition-all">
+                                <i data-lucide="package" class="mx-auto mb-1"></i> Take Away
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="method" value="Dine In" class="peer sr-only">
+                            <div class="p-4 border-2 border-slate-100 rounded-2xl text-center font-bold text-slate-400 peer-checked:border-lime-500 peer-checked:bg-lime-50 peer-checked:text-lime-600 transition-all">
+                                <i data-lucide="utensils-crosshair" class="mx-auto mb-1"></i> Makan di Sini
+                            </div>
+                        </label>
+                    </div>
+                    <input type="text" id="cust-note" placeholder="Catatan (No Meja / Alamat Kirim)" class="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-lime-500 outline-none font-semibold text-sm">
+                </div>
+
+                <!-- Order Summary Dynamic -->
+                <div class="bg-slate-900 rounded-[32px] p-8 text-white shadow-2xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-bold">Daftar Belanja</h3>
+                        <a href="index.html" class="text-xs text-lime-400 font-bold underline">Ubah Menu</a>
+                    </div>
+                    <div id="cart-list" class="space-y-3 opacity-80 mb-8 text-sm">
+                        <!-- Dynamic items -->
+                    </div>
+                    <div class="flex justify-between items-center pt-6 border-t border-white/10">
+                        <span class="text-sm font-bold text-slate-400 uppercase tracking-widest">Total Bayar</span>
+                        <span id="total-price" class="text-3xl font-black text-lime-400">Rp 0</span>
+                    </div>
+                </div>
+
+                <button type="button" id="btn-submit" onclick="handleSubmit()" class="w-full py-6 bg-lime-600 text-white rounded-[24px] font-black text-xl shadow-xl shadow-lime-900/20 hover:bg-lime-700 transition active:scale-95">
+                    PESAN SEKARANG
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const gasUrl = localStorage.getItem('gas_url') || "";
+        // Simulasi cart dari localStorage (dari index.html)
+        let cart = JSON.parse(localStorage.getItem('user_cart')) || [
+            { id: 'M02', name: 'Ayam Bakar Natural', qty: 2, price: 45000 }
+        ];
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            let total = 0;
+            list.innerHTML = cart.map(item => {
+                total += item.qty * item.price;
+                return `<div class="flex justify-between"><span>${item.name} x ${item.qty}</span><span>Rp ${(item.qty * item.price).toLocaleString()}</span></div>`;
+            }).join('');
+            document.getElementById('total-price').innerText = "Rp " + total.toLocaleString('id-ID');
+        }
+
+        async function handleSubmit() {
+            const name = document.getElementById('cust-name').value;
+            const wa = document.getElementById('cust-wa').value;
+            const method = document.querySelector('input[name="method"]:checked').value;
+            const note = document.getElementById('cust-note').value;
+
+            if(!name || !wa) return alert("Lengkapi Nama & WhatsApp!");
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = "MENGIRIM...";
+
+            // 1. Kirim ke Server (Agar masuk ke sistem Kasir/Owner)
+            const orderPayload = {
+                action: "SUBMIT_ORDER",
+                orderId: "ONL-" + Date.now().toString().slice(-6),
+                customer: name,
+                method: method,
+                staffId: "ONLINE_ORDER",
+                items: cart.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    qty: i.qty,
+                    subtotal: i.qty * i.price,
+                    profit: (i.qty * i.price) * 0.4
+                }))
+            };
+
+            try {
+                if(gasUrl) {
+                    await fetch(gasUrl, { method: "POST", body: JSON.stringify(orderPayload) });
+                }
+                
+                // 2. Redirect WhatsApp
+                let waText = `Halo Admin RM Pangkalan, saya ingin memesan:\n\n`;
+                cart.forEach(i => waText += `- ${i.name} (${i.qty}x)\n`);
+                waText += `\nTotal: ${document.getElementById('total-price').innerText}`;
+                waText += `\nMetode: ${method}\nCatatan: ${note}\n\nAtas Nama: ${name}`;
+                
+                const waUrl = `https://wa.me/6281234567890?text=${encodeURIComponent(waText)}`;
+                window.location.href = waUrl;
+
+            } catch (e) {
+                alert("Koneksi Error. Pastikan URL Cloud sudah benar.");
+                btn.disabled = false;
+                btn.innerText = "PESAN SEKARANG";
+            }
+        }
+
+        window.onload = renderCart;
+    </script>
+</body>
+</html>
