@@ -12,7 +12,7 @@
         .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 0; background: white; border-right: 1px solid #f0f0f0; }
         .main-content { margin-left: 260px; min-height: 100vh; padding: 24px; }
         .hero-banner { 
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1200');
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=1200');
             background-size: cover; background-position: center;
         }
         @media (max-width: 1023px) {
@@ -21,12 +21,13 @@
             .floating-pill { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50; }
         }
         .nav-link-active { background-color: #84cc16; color: white; border-radius: 12px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="antialiased text-slate-800">
 
     <!-- DESKTOP SIDEBAR -->
-    <aside class="sidebar p-6 flex flex-col">
+    <aside class="sidebar p-6 flex flex-col no-print">
         <div class="mb-10">
             <h1 class="text-2xl font-bold text-slate-900 leading-tight">Pangkalan</h1>
             <p class="text-[10px] tracking-[0.2em] font-bold text-lime-600 uppercase">Natural Resto</p>
@@ -39,23 +40,8 @@
                     <a href="index.html" class="nav-link-active flex items-center gap-3 px-4 py-3 text-sm font-semibold">
                         <i data-lucide="layout-grid" class="w-5 h-5"></i> Beranda
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition">
-                        <i data-lucide="utensils" class="w-5 h-5"></i> Semua Menu
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition pl-10">Makanan</a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition pl-10">Segeran</a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition pl-10">Wedangan</a>
-                </nav>
-            </div>
-
-            <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Layanan</p>
-                <nav class="space-y-1">
-                    <a href="order-online.html" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition">
-                        <i data-lucide="shopping-cart" class="w-5 h-5"></i> Order Online
-                    </a>
                     <a href="absensi.html" class="flex items-center gap-3 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition">
-                        <i data-lucide="user-check" class="w-5 h-5"></i> Member Area
+                        <i data-lucide="user-check" class="w-5 h-5"></i> Area Pegawai
                     </a>
                 </nav>
             </div>
@@ -64,82 +50,104 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
-        <!-- Header -->
         <header class="flex items-center justify-between mb-8">
             <div>
                 <h2 class="text-3xl font-extrabold text-slate-900">Beranda</h2>
-                <p class="text-xs text-slate-400 flex items-center gap-1"><span class="w-2 h-2 bg-slate-300 rounded-full"></span> MENYIAPKAN SISTEM...</p>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="hidden md:flex items-center bg-white border border-slate-200 rounded-full px-4 py-2 w-64 shadow-sm">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400 mr-2"></i>
-                    <input type="text" placeholder="Cari menu..." class="bg-transparent border-none text-sm focus:outline-none w-full">
-                </div>
-                <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-xs font-bold text-slate-500 border-2 border-white shadow-sm">GU</div>
+                <p class="text-xs text-slate-400 flex items-center gap-2" id="sync-status">
+                    <span class="w-2 h-2 bg-slate-300 rounded-full animate-pulse"></span> MENYIAPKAN MENU...
+                </p>
             </div>
         </header>
 
-        <!-- Hero Section -->
         <section class="hero-banner h-64 lg:h-96 rounded-[40px] relative overflow-hidden mb-10 flex items-center px-10">
-            <div class="max-w-md">
-                <p class="text-lime-400 font-bold text-sm mb-2 uppercase tracking-widest">Best Nutrition With</p>
-                <h3 class="text-4xl lg:text-6xl font-black text-white leading-tight mb-6 italic">Pangkalan <br><span class="text-lime-500">Natural Resto</span></h3>
-                <button class="bg-lime-500 hover:bg-lime-600 text-white px-8 py-3 rounded-full font-bold flex items-center gap-2 transition shadow-xl shadow-lime-900/20">
-                    Pesan Sekarang <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <div class="max-w-md animate-in fade-in slide-in-from-left duration-700">
+                <p class="text-lime-400 font-bold text-sm mb-2 uppercase tracking-widest">Pilihan Nutrisi Terbaik</p>
+                <h3 class="text-4xl lg:text-6xl font-black text-white leading-tight mb-6 italic">RM Pangkalan <br><span class="text-lime-500">Natural Resto</span></h3>
+                <button onclick="document.getElementById('menu-section').scrollIntoView({behavior:'smooth'})" class="bg-lime-500 hover:bg-lime-600 text-white px-8 py-3 rounded-full font-bold flex items-center gap-2 transition shadow-xl shadow-lime-900/20">
+                    Lihat Menu <i data-lucide="arrow-down" class="w-4 h-4"></i>
                 </button>
             </div>
         </section>
 
-        <!-- Categories Pill -->
-        <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar pb-2">
-            <button class="bg-lime-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-lime-200">SEMUA</button>
-            <button class="bg-white border text-slate-500 px-6 py-2 rounded-xl text-sm font-bold">MAKANAN</button>
-            <button class="bg-white border text-slate-500 px-6 py-2 rounded-xl text-sm font-bold">SEGERAN</button>
-            <button class="bg-white border text-slate-500 px-6 py-2 rounded-xl text-sm font-bold">WEDANGAN</button>
-            <button class="bg-white border text-slate-500 px-6 py-2 rounded-xl text-sm font-bold">CAMILAN</button>
-        </div>
+        <div id="menu-section">
+            <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar pb-2" id="category-pills">
+                <button class="bg-lime-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg">SEMUA</button>
+            </div>
 
-        <!-- Menu Grid -->
-        <div id="menu-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <!-- Data Dummy akan muncul di sini -->
-            <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition group">
-                <div class="aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden relative">
-                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300" class="w-full h-full object-cover">
-                    <button class="absolute bottom-3 right-3 bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg text-lime-600 group-hover:bg-lime-600 group-hover:text-white transition">
-                        <i data-lucide="plus" class="w-5 h-5"></i>
-                    </button>
-                </div>
-                <h4 class="font-bold text-slate-800">Healthy Salad Pangkalan</h4>
-                <p class="text-lime-600 font-black mt-1">Rp 28.000</p>
+            <div id="menu-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Data dari Cloud akan muncul di sini -->
             </div>
         </div>
 
-        <!-- Empty State (like in image) -->
-        <div id="empty-state" class="hidden py-20 text-center">
-            <p class="text-slate-300 font-bold uppercase tracking-widest text-sm italic">MENU TIDAK DITEMUKAN</p>
+        <div id="empty-state" class="hidden py-40 text-center flex flex-col items-center opacity-20">
+            <i data-lucide="search-x" class="w-16 h-16 mb-4"></i>
+            <p class="text-slate-500 font-bold uppercase tracking-widest text-sm italic">MENU BELUM TERSEDIA</p>
         </div>
     </main>
 
     <!-- MOBILE NAVIGATION PILL -->
     <div class="lg:hidden floating-pill bg-white/80 backdrop-blur-lg border border-white/50 px-8 py-4 rounded-full flex gap-10 shadow-2xl items-center">
         <a href="index.html" class="text-lime-600"><i data-lucide="home"></i></a>
-        <button class="relative text-slate-400">
-            <i data-lucide="shopping-bag"></i>
-            <span class="absolute -top-2 -right-2 bg-lime-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
-        </button>
         <a href="absensi.html" class="text-slate-400"><i data-lucide="user"></i></a>
     </div>
 
     <script>
-        lucide.createIcons();
+        const gasUrl = localStorage.getItem('gas_url') || "";
+        let menus = [];
 
-        // Turbo Sync Logic
         async function fetchMenu() {
-            // Placeholder logic untuk ambil data dari sheet nantinya
-            console.log("Fetching menu from Google Sheets...");
+            if(!gasUrl) {
+                document.getElementById('sync-status').innerHTML = `<span class="text-red-500">⚠ API URL Belum Diatur Owner</span>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(gasUrl);
+                const result = await response.json();
+                if(result.status === "success") {
+                    menus = result.data.menus;
+                    renderMenu();
+                    document.getElementById('sync-status').innerHTML = `<span class="w-2 h-2 bg-lime-500 rounded-full"></span> MENU TERUPDATE`;
+                }
+            } catch (err) {
+                console.error("Gagal mengambil menu:", err);
+            }
         }
 
-        window.onload = fetchMenu;
+        function renderMenu(filter = "SEMUA") {
+            const container = document.getElementById('menu-container');
+            const filtered = filter === "SEMUA" ? menus : menus.filter(m => m.kategori === filter);
+            
+            if(filtered.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('empty-state').classList.add('hidden');
+            container.innerHTML = filtered.map(m => `
+                <div class="bg-white p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+                    <div class="aspect-square bg-slate-50 rounded-[24px] mb-4 overflow-hidden relative shadow-inner">
+                        <img src="${m.img_id ? 'https://lh3.googleusercontent.com/d/'+m.img_id : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300'}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <p class="text-[9px] font-black text-lime-600 uppercase tracking-widest mb-1">${m.kategori}</p>
+                    <h4 class="font-bold text-slate-800 line-clamp-1">${m.nama}</h4>
+                    <div class="flex justify-between items-center mt-3">
+                        <p class="text-slate-900 font-black">Rp ${parseInt(m.harga_jual).toLocaleString('id-ID')}</p>
+                        <a href="order-online.html" class="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-lime-600 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        window.onload = () => {
+            fetchMenu();
+            lucide.createIcons();
+        };
     </script>
 </body>
 </html>
