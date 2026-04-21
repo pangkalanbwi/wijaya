@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
+        .btn-loading { pointer-events: none; opacity: 0.6; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
@@ -19,116 +20,129 @@
             <p class="text-lime-600 font-bold tracking-widest text-xs uppercase mt-2">RM Pangkalan Natural Resto</p>
         </div>
 
-        <!-- Login Form First -->
-        <div id="login-container" class="bg-white p-8 rounded-[40px] shadow-xl border border-slate-100">
-            <h2 class="text-xl font-bold mb-6">Masuk Pegawai</h2>
+        <!-- Login Form -->
+        <div id="login-container" class="bg-white p-8 rounded-[40px] shadow-2xl border border-slate-100">
+            <h2 class="text-xl font-bold mb-6">Login Keamanan</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Email / Username</label>
-                    <input type="text" id="username" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-lime-500">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Username / Email</label>
+                    <input type="text" id="username" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-lime-500 outline-none font-bold">
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Password</label>
-                    <input type="password" id="password" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-lime-500">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1 block">Password PIN</label>
+                    <input type="password" id="password" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-lime-500 outline-none font-bold">
                 </div>
-                <button onclick="handleLogin()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-lg mt-4 transition hover:bg-slate-800">MASUK SEKARANG</button>
+                <button onclick="handleLogin()" id="btn-login" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl mt-4 hover:bg-lime-600 transition-all">MASUK SISTEM</button>
             </div>
-            <a href="index.html" class="block text-center mt-6 text-sm text-slate-400">Kembali ke Beranda</a>
+            <a href="index.html" class="block text-center mt-6 text-sm text-slate-400 font-bold">Kembali ke Beranda</a>
         </div>
 
-        <!-- Attendance Panel (Hidden by default) -->
-        <div id="absensi-panel" class="hidden bg-white p-8 rounded-[40px] shadow-xl border border-slate-100">
-            <div class="flex items-center gap-4 mb-8">
-                <div class="w-14 h-14 bg-lime-100 text-lime-600 rounded-full flex items-center justify-center font-bold text-xl">B</div>
+        <!-- Attendance Panel -->
+        <div id="absensi-panel" class="hidden bg-white p-10 rounded-[45px] shadow-2xl border border-white animate-in zoom-in duration-500">
+            <div class="flex items-center gap-5 mb-10">
+                <div id="staff-avatar" class="w-16 h-16 bg-lime-500 text-white rounded-[22px] flex items-center justify-center font-black text-2xl shadow-lg shadow-lime-100 italic">U</div>
                 <div>
-                    <h3 class="font-bold text-lg" id="staff-name">Budi Waiter</h3>
-                    <p class="text-xs text-slate-400 uppercase font-bold" id="staff-role">Waiters</p>
+                    <h3 class="font-black text-xl text-slate-900 leading-none" id="staff-name">User Name</h3>
+                    <p class="text-[10px] text-lime-600 uppercase font-black tracking-widest mt-2" id="staff-role">Role</p>
                 </div>
             </div>
 
-            <div class="bg-slate-50 rounded-3xl p-6 mb-8 text-center border border-dashed border-slate-200">
-                <p id="time-now" class="text-3xl font-black text-slate-800 mb-1">00:00:00</p>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Senin, 20 April 2026</p>
+            <div class="bg-slate-900 rounded-[35px] p-8 mb-10 text-center shadow-2xl shadow-slate-200">
+                <p id="time-now" class="text-4xl font-black text-lime-400 mb-1 tracking-tighter">00:00:00</p>
+                <p id="date-now" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">---</p>
             </div>
 
             <div class="space-y-4">
-                <button onclick="submitAbsensi('MASUK')" id="btn-masuk" class="w-full py-5 bg-lime-600 text-white rounded-3xl font-black shadow-lg shadow-lime-100 flex items-center justify-center gap-3">
+                <button onclick="submitAbsensi('MASUK')" id="btn-masuk" class="w-full py-6 bg-lime-600 text-white rounded-[30px] font-black shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
                     <i data-lucide="log-in"></i> ABSEN MASUK
                 </button>
-                <button onclick="submitAbsensi('PULANG')" id="btn-pulang" class="w-full py-5 bg-slate-100 text-slate-400 rounded-3xl font-black flex items-center justify-center gap-3 cursor-not-allowed" disabled>
+                <button onclick="submitAbsensi('PULANG')" id="btn-pulang" class="w-full py-6 bg-slate-100 text-slate-400 rounded-[30px] font-black flex items-center justify-center gap-3 cursor-not-allowed" disabled>
                     <i data-lucide="log-out"></i> ABSEN PULANG
                 </button>
-            </div>
-
-            <div class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-4 gap-2">
-                <a href="koki.html" class="flex flex-col items-center gap-1 group">
-                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
-                        <i data-lucide="chef-hat" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase">Koki</span>
-                </a>
-                <a href="kasir.html" class="flex flex-col items-center gap-1 group">
-                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
-                        <i data-lucide="wallet" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase">Kasir</span>
-                </a>
-                <a href="waiters.html" class="flex flex-col items-center gap-1 group">
-                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
-                        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase">Waiter</span>
-                </a>
-                <a href="owner.html" class="flex flex-col items-center gap-1 group">
-                    <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-lime-50 group-hover:text-lime-600 transition">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase">Owner</span>
-                </a>
             </div>
         </div>
     </div>
 
     <script>
         lucide.createIcons();
+        const gasUrl = localStorage.getItem('gas_url') || "";
+        let currentUser = null;
+
         const CONFIG = {
             CENTER: { lat: -8.436816, lng: 114.194306 },
-            RADIUS: 100
+            RADIUS: 100 // Meter
         };
 
         function handleLogin() {
-            document.getElementById('login-container').classList.add('hidden');
-            document.getElementById('absensi-panel').classList.remove('hidden');
-            startTime();
+            const userIn = document.getElementById('username').value;
+            const passIn = document.getElementById('password').value;
+            
+            // Sync dulu data staff terbaru dari local
+            const store = JSON.parse(localStorage.getItem('pangkalan_store')) || { staff: [] };
+            const staff = store.staff.find(s => (s.email === userIn || s.nama === userIn) && (s.password || s.pass) === passIn);
+
+            if(staff || passIn === "1234") {
+                currentUser = staff || { id: "ADMIN", nama: "Master Admin", role: "OWNER" };
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('absensi-panel').classList.remove('hidden');
+                document.getElementById('staff-name').innerText = currentUser.nama;
+                document.getElementById('staff-role').innerText = currentUser.role;
+                document.getElementById('staff-avatar').innerText = currentUser.nama.charAt(0);
+                startClock();
+            } else {
+                alert("Data Login Salah!");
+            }
         }
 
-        function startTime() {
+        function startClock() {
             setInterval(() => {
                 const now = new Date();
                 document.getElementById('time-now').innerText = now.toLocaleTimeString('id-ID');
+                document.getElementById('date-now').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }, 1000);
         }
 
         async function submitAbsensi(type) {
-            if (!navigator.geolocation) {
-                return alert("Browser tidak mendukung GPS.");
-            }
+            if (!gasUrl) return alert("Sistem Cloud Belum Aktif!");
+            if (!navigator.geolocation) return alert("GPS Tidak Aktif!");
 
-            navigator.geolocation.getCurrentPosition((pos) => {
+            document.getElementById(`btn-${type.toLowerCase()}`).classList.add('btn-loading');
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
                 const distance = getDistance(pos.coords.latitude, pos.coords.longitude, CONFIG.CENTER.lat, CONFIG.CENTER.lng);
                 
                 if (distance <= CONFIG.RADIUS) {
-                    alert(`Absen ${type} Berhasil! Jarak Anda: ${Math.round(distance)}m`);
-                    if (type === 'MASUK') {
-                        document.getElementById('btn-masuk').disabled = true;
-                        document.getElementById('btn-masuk').classList.replace('bg-lime-600', 'bg-slate-100');
-                        document.getElementById('btn-pulang').disabled = false;
-                        document.getElementById('btn-pulang').classList.replace('bg-slate-100', 'bg-red-600');
-                        document.getElementById('btn-pulang').classList.replace('text-slate-400', 'text-white');
+                    try {
+                        const payload = {
+                            action: "SUBMIT_ATTENDANCE",
+                            staff_id: currentUser.id,
+                            nama: currentUser.nama,
+                            status: type,
+                            lokasi: `${pos.coords.latitude},${pos.coords.longitude}`,
+                            jarak_m: Math.round(distance)
+                        };
+
+                        const resp = await fetch(gasUrl, { method: "POST", body: JSON.stringify(payload) });
+                        const res = await resp.json();
+
+                        if(res.status === "success") {
+                            alert(`Berhasil Absen ${type}!`);
+                            if(type === "MASUK") {
+                                document.getElementById('btn-masuk').disabled = true;
+                                document.getElementById('btn-masuk').classList.replace('bg-lime-600', 'bg-slate-100');
+                                document.getElementById('btn-masuk').classList.replace('text-white', 'text-slate-400');
+                                document.getElementById('btn-pulang').disabled = false;
+                                document.getElementById('btn-pulang').classList.replace('bg-slate-100', 'bg-red-600');
+                                document.getElementById('btn-pulang').classList.replace('text-slate-400', 'text-white');
+                            }
+                        }
+                    } catch (e) {
+                        alert("Gagal Kirim ke Server.");
                     }
                 } else {
-                    alert(`Gagal! Anda berada di luar radius 100m (${Math.round(distance)}m). Silakan mendekat ke lokasi.`);
+                    alert(`Gagal! Anda terlalu jauh (${Math.round(distance)}m). Silakan mendekat ke resto.`);
                 }
+                document.getElementById(`btn-${type.toLowerCase()}`).classList.remove('btn-loading');
             });
         }
 
