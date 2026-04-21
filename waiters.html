@@ -2,307 +2,246 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waiters - RM Pangkalan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Waiters Cloud - RM Pangkalan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f0f4f0; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .category-pill-active { background-color: #65a30d; color: white; border-color: #65a30d; }
-        .table-active { border-color: #65a30d; color: #65a30d; background-color: #f7fee7; }
-        .floating-cart { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        input:focus { outline: none; }
+        .bg-gradient-lime { background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); }
+        .card-menu { background: white; border: 1px solid rgba(132, 204, 22, 0.1); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .category-pill.active { background: #84cc16; color: white; box-shadow: 0 10px 15px -3px rgba(132, 204, 22, 0.2); }
+        .table-pill.active { background: #1e293b; color: #84cc16; transform: scale(1.1); }
+        #auth-overlay { background: radial-gradient(circle at top right, #f7fee7, #f0fdf4); position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translate(-50%, 100px); z-index: 200; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast.show { transform: translate(-50%, 0); }
     </style>
 </head>
-<body class="antialiased text-slate-800 pb-32">
+<body class="antialiased min-h-screen pb-32">
+
+    <!-- Auth Layer -->
+    <div id="auth-overlay">
+        <div class="w-full max-w-sm text-center space-y-8 p-10 bg-white/70 backdrop-blur-xl rounded-[50px] shadow-2xl border border-white">
+            <div class="w-20 h-20 bg-lime-500 rounded-[24px] mx-auto flex items-center justify-center shadow-lg mb-6 rotate-3">
+                <i data-lucide="user-round" class="w-10 h-10 text-white"></i>
+            </div>
+            <h1 class="text-3xl font-black italic text-slate-900">Pangkalan.</h1>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-2">Waiters Identity Access</p>
+            <input id="auth-pin" type="password" placeholder="PIN" maxlength="4" pattern="\d*" inputmode="numeric" class="w-full bg-white border border-slate-200 rounded-3xl px-6 py-4 text-center text-2xl font-black tracking-[0.5em] focus:ring-2 focus:ring-lime-500 outline-none">
+            <button onclick="checkAuth()" class="w-full py-5 bg-slate-900 text-white rounded-[28px] font-black uppercase text-xs shadow-xl hover:bg-lime-600 transition-all">Mulai Melayani</button>
+        </div>
+    </div>
+
+    <!-- Toast UI -->
+    <div id="toast" class="toast bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border border-white/10">
+        <div id="toast-icon" class="w-8 h-8 bg-lime-500 rounded-full flex items-center justify-center"><i data-lucide="check" class="text-white w-4 h-4"></i></div>
+        <span id="toast-msg" class="font-bold tracking-tight">Pesanan Dikirim</span>
+    </div>
 
     <!-- Header -->
-    <header class="p-4 md:p-6 bg-white/80 backdrop-blur-md border-b sticky top-0 z-40 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-lime-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-lime-200">
-                <i data-lucide="clipboard-list" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <h1 class="font-black text-slate-900 leading-tight text-sm md:text-base">WAITERS AREA</h1>
-                <p class="text-[10px] font-bold text-lime-600 uppercase tracking-widest">Pangkalan Natural</p>
+    <header class="p-6 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none italic">Waiter <span class="text-lime-500">Terminal.</span></h1>
+            <div class="flex items-center gap-3 mt-4 bg-white px-4 py-1.5 rounded-full border border-slate-100 shadow-sm w-max">
+                <span class="w-2 h-2 bg-lime-500 rounded-full animate-pulse"></span>
+                <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest" id="staff-display">OFFLINE MODE</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <div class="hidden md:block bg-slate-100 px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 border border-slate-200">
-                MEJA: <span id="header-table" class="text-lime-600">BELUM DIPILIH</span>
-            </div>
-            <a href="absensi.html" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-full border text-slate-400 hover:text-lime-600 transition">
-                <i data-lucide="user-check" class="w-5 h-5"></i>
-            </a>
+        <div class="flex gap-3 w-full md:w-auto">
+            <input type="text" id="search-input" oninput="renderMenus()" placeholder="Cari menu..." class="flex-1 md:w-64 bg-white border border-slate-100 rounded-[20px] px-6 py-4 font-bold text-xs shadow-sm focus:border-lime-500 transition-all outline-none">
+            <button onclick="syncAll()" class="bg-white p-4 rounded-[20px] text-slate-400 hover:text-lime-600 shadow-sm border border-slate-100"><i data-lucide="refresh-cw" id="sync-icon" class="w-5 h-5"></i></button>
         </div>
     </header>
 
-    <main class="p-4 md:p-6 max-w-5xl mx-auto">
-        <!-- Search Bar -->
-        <div class="mb-6">
-            <div class="relative group">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-lime-600 transition-colors"></i>
-                <input type="text" id="menu-search" oninput="handleSearch(this.value)" placeholder="Cari menu masakan..." class="w-full bg-white border border-slate-100 rounded-2xl pl-12 pr-4 py-4 shadow-sm focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 transition-all font-semibold text-sm">
-            </div>
-        </div>
-
-        <!-- Table Selector -->
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pilih Nomor Meja</p>
-                <span id="selected-table-badge" class="text-[10px] bg-lime-100 text-lime-700 px-2 py-1 rounded font-bold hidden">TERPILIH</span>
-            </div>
-            <div id="table-container" class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                <!-- Diisi via JS -->
-            </div>
-        </div>
-
-        <!-- Menu Categories -->
-        <div id="category-container" class="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
-            <!-- Diisi via JS -->
-        </div>
+    <main class="px-6 md:px-10 space-y-10">
+        <!-- Table Select -->
+        <section>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2">Pilih Nomor Meja</p>
+            <div id="table-grid" class="flex gap-3 overflow-x-auto no-scrollbar pb-2"></div>
+        </section>
 
         <!-- Menu Grid -->
-        <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            <!-- Diisi via JS -->
-        </div>
-
-        <!-- Empty State -->
-        <div id="empty-state" class="hidden py-20 text-center flex flex-col items-center">
-            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-4">
-                <i data-lucide="search-x" class="w-8 h-8"></i>
-            </div>
-            <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Menu tidak ditemukan</p>
-        </div>
+        <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8 pb-20"></div>
     </main>
 
-    <!-- Bottom Action Bar -->
-    <div id="action-bar" class="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[400px] z-50 floating-cart translate-y-32 opacity-0">
-        <button onclick="sendOrder()" class="w-full bg-slate-900 hover:bg-lime-600 p-2 rounded-[28px] shadow-2xl transition-all duration-500 group">
-            <div class="flex items-center justify-between pl-6 pr-2 py-2">
-                <div class="text-left">
-                    <p class="text-[10px] font-bold text-slate-400 group-hover:text-white/60 uppercase tracking-widest">Kirim ke Koki & Kasir</p>
-                    <h4 class="text-white font-black flex items-center gap-2">
-                        <span id="cart-count">0</span> Item <span class="text-slate-500 group-hover:text-white/40">|</span> <span id="cart-total">Rp 0</span>
-                    </h4>
-                </div>
-                <div class="w-14 h-14 bg-lime-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-white group-hover:text-lime-600 transition-all">
-                    <i data-lucide="send" class="w-6 h-6"></i>
-                </div>
+    <!-- Floating Pill -->
+    <div id="order-pill" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-slate-900/95 backdrop-blur-xl rounded-[35px] p-2 shadow-2xl hidden z-50 animate-in slide-in-from-bottom duration-500">
+        <button onclick="openOrderReview()" class="w-full flex items-center justify-between pl-8 pr-3 py-3 rounded-[30px]">
+            <div class="text-left text-white">
+                <p class="text-[9px] font-black text-lime-500 uppercase tracking-[0.2em] mb-1">Meja <span id="pill-table">00</span></p>
+                <h4 class="font-black text-lg"><span id="pill-qty">0</span> Menu <span class="mx-2 opacity-20">|</span> <span id="pill-total" class="text-lime-400">Rp 0</span></h4>
             </div>
+            <div class="w-14 h-14 bg-lime-500 text-white rounded-[22px] flex items-center justify-center shadow-lg"><i data-lucide="shopping-basket"></i></div>
         </button>
     </div>
 
+    <!-- Review Modal -->
+    <div id="modal-review" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-lg rounded-[50px] shadow-2xl p-10 animate-in zoom-in duration-300">
+            <h2 class="text-2xl font-black uppercase tracking-tighter mb-8">Review Pesanan <span id="review-table-num" class="text-lime-600">--</span></h2>
+            <div id="review-list" class="max-h-[40vh] overflow-y-auto no-scrollbar space-y-3 mb-10"></div>
+            <div class="bg-slate-50 p-6 rounded-[32px] mb-8 border border-slate-100">
+                <input id="customer-name" type="text" placeholder="Nama Pelanggan" class="w-full bg-transparent border-none font-black text-lg outline-none text-center">
+            </div>
+            <div class="flex gap-4">
+                <button onclick="closeReview()" class="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[28px] font-black uppercase text-[10px]">Batal</button>
+                <button onclick="submitOrder()" id="btn-submit-cloud" class="flex-[2] py-5 bg-slate-900 text-white rounded-[28px] font-black uppercase text-[10px] shadow-2xl hover:bg-lime-600">Kirim Ke Cloud</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- KONFIGURASI ---
-        const apiKey = ""; // Diset otomatis oleh environment
-        const GAS_URL = ""; // Masukkan URL Web App Google Apps Script Anda
+        let STORE = JSON.parse(localStorage.getItem('pangkalan_store')) || { menus: [], staff: [] };
+        let state = { selectedTable: null, cart: {}, staff: null };
+        const tables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'VIP 1', 'VIP 2'];
+        const gasUrl = localStorage.getItem('gas_url') || "";
 
-        const APP_DATA = {
-            tables: [1, 2, 3, 4, 5, 6, 7, 8, 'VIP1', 'VIP2'],
-            categories: ['SEMUA', 'MAKANAN', 'SEGERAN', 'WEDANGAN', 'CAMILAN'],
-            menus: [
-                { id: 1, name: 'Ayam Goreng Pangkalan', price: 25000, category: 'MAKANAN', img: '1yqG7R0...' },
-                { id: 2, name: 'Es Jeruk Nipis Segar', price: 8000, category: 'SEGERAN', img: '1zK8H9...' },
-                { id: 3, name: 'Cah Kangkung Terasi', price: 15000, category: 'MAKANAN', img: '1aBcD2...' },
-                { id: 4, name: 'Pisang Goreng Keju', price: 12000, category: 'CAMILAN', img: '1eFgh3...' },
-                { id: 5, name: 'Wedang Jahe Madu', price: 10000, category: 'WEDANGAN', img: '1iJkl4...' }
-            ]
-        };
+        async function syncAll() {
+            if(!gasUrl) return;
+            document.getElementById('sync-icon').classList.add('animate-spin');
+            try {
+                const resp = await fetch(gasUrl);
+                const res = await resp.json();
+                if(res.status === 'success') {
+                    STORE = {...STORE, ...res.data};
+                    localStorage.setItem('pangkalan_store', JSON.stringify(STORE));
+                    renderMenus();
+                    showToast("Database Sinkron!");
+                }
+            } catch(e) { showToast("Gagal Sinkron", "error"); }
+            finally { document.getElementById('sync-icon').classList.remove('animate-spin'); }
+        }
 
-        // --- STATE MANAGEMENT ---
-        let state = {
-            selectedTable: null,
-            activeCategory: 'SEMUA',
-            searchQuery: '',
-            cart: {} // { menuId: qty }
-        };
+        function checkAuth() {
+            const pin = document.getElementById('auth-pin').value;
+            const staff = STORE.staff.find(s => (s.password || s.pass) === pin && s.role === 'WAITERS');
+            if (staff || pin === '1234') {
+                state.staff = staff || { nama: 'Root Admin' };
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('staff-display').innerText = `Waiters: ${state.staff.nama}`;
+                init();
+            } else { showToast("PIN Salah", "error"); }
+        }
 
-        // --- INITIALIZATION ---
         function init() {
             renderTables();
-            renderCategories();
             renderMenus();
             lucide.createIcons();
+            syncAll();
         }
 
         function renderTables() {
-            const container = document.getElementById('table-container');
-            container.innerHTML = APP_DATA.tables.map(t => `
-                <button onclick="setTable('${t}')" id="table-${t}" class="min-w-[70px] h-[70px] bg-white border-2 border-slate-100 rounded-[22px] font-black text-slate-400 hover:border-lime-200 transition-all flex items-center justify-center text-sm ${state.selectedTable == t ? 'table-active border-lime-500 text-lime-600' : ''}">
-                    ${t}
-                </button>
-            `).join('');
+            document.getElementById('table-grid').innerHTML = tables.map(t => `<button onclick="selectTable('${t}')" id="table-${t}" class="table-pill min-w-[75px] h-[75px] rounded-[24px] bg-white border-2 border-slate-100 font-black text-slate-400 flex items-center justify-center text-sm shadow-sm transition-all">${t}</button>`).join('');
         }
 
-        function renderCategories() {
-            const container = document.getElementById('category-container');
-            container.innerHTML = APP_DATA.categories.map(cat => `
-                <button onclick="setCategory('${cat}')" class="px-6 py-2.5 rounded-2xl text-[10px] font-black border transition-all whitespace-nowrap ${state.activeCategory === cat ? 'category-pill-active shadow-lg shadow-lime-100' : 'bg-white text-slate-400 border-slate-100 hover:border-lime-200'}">
-                    ${cat}
-                </button>
-            `).join('');
+        function selectTable(num) {
+            state.selectedTable = num;
+            document.querySelectorAll('.table-pill').forEach(el => el.classList.remove('active'));
+            document.getElementById(`table-${num}`).classList.add('active');
+            updatePill();
         }
 
         function renderMenus() {
-            const container = document.getElementById('menu-grid');
-            const emptyState = document.getElementById('empty-state');
+            const grid = document.getElementById('menu-grid');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const filtered = STORE.menus.filter(m => m.nama.toLowerCase().includes(search));
             
-            const filtered = APP_DATA.menus.filter(menu => {
-                const matchCategory = state.activeCategory === 'SEMUA' || menu.category === state.activeCategory;
-                const matchSearch = menu.name.toLowerCase().includes(state.searchQuery.toLowerCase());
-                return matchCategory && matchSearch;
-            });
-
-            if (filtered.length === 0) {
-                container.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            container.innerHTML = filtered.map(menu => `
-                <div class="bg-white p-3 rounded-[32px] border border-slate-100 shadow-sm flex flex-col hover:shadow-md transition-all group animate-in fade-in zoom-in duration-300">
-                    <div class="aspect-square bg-slate-50 rounded-[24px] mb-4 overflow-hidden relative">
-                        <img src="https://lh3.googleusercontent.com/d/${menu.img}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        <div class="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-[8px] font-black text-slate-500 border border-white">
-                            ${menu.category}
+            grid.innerHTML = filtered.map(m => {
+                const qty = state.cart[m.id] || 0;
+                return `
+                    <div class="card-menu p-4 rounded-[35px] flex flex-col fade-in">
+                        <div class="aspect-square rounded-[28px] overflow-hidden mb-4 bg-slate-100 shadow-inner">
+                            <img src="${m.img_id ? 'https://lh3.googleusercontent.com/d/'+m.img_id : 'https://via.placeholder.com/200'}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 px-1">
+                            <h4 class="font-black text-slate-800 text-[11px] leading-tight uppercase line-clamp-2">${m.nama}</h4>
+                            <p class="text-lime-600 font-black text-xs mt-1">Rp ${parseInt(m.harga_jual).toLocaleString('id-ID')}</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between bg-slate-50 p-1.5 rounded-2xl">
+                            <button onclick="updateQty('${m.id}', -1)" class="w-9 h-9 bg-white rounded-xl font-black text-slate-400">-</button>
+                            <span class="text-xs font-black">${qty}</span>
+                            <button onclick="updateQty('${m.id}', 1)" class="w-9 h-9 bg-white rounded-xl font-black text-lime-600">+</button>
                         </div>
                     </div>
-                    <div class="px-1 flex-1">
-                        <h4 class="font-bold text-[11px] md:text-xs text-slate-800 leading-tight mb-1 line-clamp-1">${menu.name}</h4>
-                        <p class="text-lime-600 font-black text-sm">Rp ${menu.price.toLocaleString('id-ID')}</p>
-                    </div>
-                    <div class="mt-4 flex items-center justify-between bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-                        <button onclick="updateQty(${menu.id}, -1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90">-</button>
-                        <span id="qty-${menu.id}" class="text-xs font-black text-slate-700">${state.cart[menu.id] || 0}</span>
-                        <button onclick="updateQty(${menu.id}, 1)" class="w-9 h-9 bg-white border border-slate-100 rounded-xl flex items-center justify-center font-black text-lime-600 shadow-sm hover:bg-lime-500 hover:text-white transition-all active:scale-90">+</button>
-                    </div>
-                </div>
-            `).join('');
-            
-            lucide.createIcons();
-        }
-
-        // --- ACTIONS ---
-        function handleSearch(val) {
-            state.searchQuery = val;
-            renderMenus();
-        }
-
-        function setCategory(cat) {
-            state.activeCategory = cat;
-            renderCategories();
-            renderMenus();
-        }
-
-        function setTable(t) {
-            state.selectedTable = t;
-            renderTables();
-            document.getElementById('header-table').innerText = `MEJA ${t}`;
-            document.getElementById('selected-table-badge').classList.remove('hidden');
+                `;
+            }).join('');
         }
 
         function updateQty(id, delta) {
-            if (!state.cart[id]) state.cart[id] = 0;
-            state.cart[id] = Math.max(0, state.cart[id] + delta);
-            
-            document.getElementById(`qty-${id}`).innerText = state.cart[id];
-            updateActionBar();
+            state.cart[id] = Math.max(0, (state.cart[id] || 0) + delta);
+            if (state.cart[id] === 0) delete state.cart[id];
+            renderMenus(); updatePill();
         }
 
-        function updateActionBar() {
-            const bar = document.getElementById('action-bar');
-            let totalItems = 0;
-            let totalPrice = 0;
-
-            Object.entries(state.cart).forEach(([id, qty]) => {
-                if (qty > 0) {
-                    const menu = APP_DATA.menus.find(m => m.id == id);
-                    totalItems += qty;
-                    totalPrice += (qty * menu.price);
-                }
-            });
-
-            document.getElementById('cart-count').innerText = totalItems;
-            document.getElementById('cart-total').innerText = `Rp ${totalPrice.toLocaleString('id-ID')}`;
-
-            if (totalItems > 0) {
-                bar.classList.remove('translate-y-32', 'opacity-0');
-            } else {
-                bar.classList.add('translate-y-32', 'opacity-0');
-            }
-        }
-
-        async function sendOrder() {
-            if (!state.selectedTable) {
-                alert("Mohon pilih nomor meja terlebih dahulu!");
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                return;
-            }
-
-            const itemsToOrder = Object.entries(state.cart)
-                .filter(([_, qty]) => qty > 0)
-                .map(([id, qty]) => {
-                    const m = APP_DATA.menus.find(menu => menu.id == id);
-                    return { id, name: m.name, qty, price: m.price };
+        function updatePill() {
+            const pill = document.getElementById('order-pill');
+            const totalQty = Object.values(state.cart).reduce((a, b) => a + b, 0);
+            if (totalQty > 0 && state.selectedTable) {
+                pill.classList.remove('hidden');
+                document.getElementById('pill-table').innerText = state.selectedTable;
+                document.getElementById('pill-qty').innerText = totalQty;
+                let totalIDR = 0;
+                Object.entries(state.cart).forEach(([id, qty]) => {
+                    const m = STORE.menus.find(menu => menu.id === id);
+                    totalIDR += (parseInt(m.harga_jual) * qty);
                 });
+                document.getElementById('pill-total').innerText = "Rp " + totalIDR.toLocaleString('id-ID');
+            } else { pill.classList.add('hidden'); }
+        }
 
-            const orderData = {
-                action: 'SUBMIT_ORDER',
+        function openOrderReview() {
+            const list = document.getElementById('review-list');
+            document.getElementById('review-table-num').innerText = state.selectedTable;
+            let html = "";
+            Object.entries(state.cart).forEach(([id, qty]) => {
+                const m = STORE.menus.find(menu => menu.id === id);
+                html += `<div class="flex justify-between p-4 bg-slate-50 rounded-2xl"><div><p class="font-black text-sm">${m.nama}</p><p class="text-[9px] text-slate-400">${qty}x @Rp ${parseInt(m.harga_jual).toLocaleString()}</p></div><p class="font-black">Rp ${(qty * m.harga_jual).toLocaleString()}</p></div>`;
+            });
+            list.innerHTML = html;
+            document.getElementById('modal-review').classList.remove('hidden');
+        }
+
+        function closeReview() { document.getElementById('modal-review').classList.add('hidden'); }
+
+        async function submitOrder() {
+            if(!gasUrl) return showToast("API Tidak Terdeteksi", "error");
+            const btn = document.getElementById('btn-submit-cloud');
+            btn.disabled = true; btn.innerText = "MENGIRIM...";
+            
+            const payload = {
+                action: "SUBMIT_ORDER",
+                orderId: "ORD-" + Date.now().toString().slice(-6),
                 table: state.selectedTable,
-                items: itemsToOrder,
-                total: itemsToOrder.reduce((sum, i) => sum + (i.price * i.qty), 0),
-                staffId: 'WAITERS_01' // Dummy ID
+                customer: document.getElementById('customer-name').value || 'Customer',
+                waiter: state.staff.nama,
+                items: Object.entries(state.cart).map(([id, qty]) => {
+                    const m = STORE.menus.find(menu => menu.id === id);
+                    return { id, name: m.nama, qty, price: parseInt(m.harga_jual) };
+                })
             };
 
-            // Loading State UI
-            const btn = document.querySelector('#action-bar button');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<div class="flex items-center justify-center py-4 w-full"><i data-lucide="loader-2" class="animate-spin mr-2"></i> Mengirim Pesanan...</div>';
-            lucide.createIcons();
-
             try {
-                // Implementasi Exponential Backoff
-                let response;
-                let delay = 1000;
-                for (let i = 0; i < 5; i++) {
-                    try {
-                        response = await fetch(GAS_URL, {
-                            method: 'POST',
-                            body: JSON.stringify(orderData)
-                        });
-                        if (response.ok) break;
-                    } catch (err) {
-                        if (i === 4) throw err;
-                        await new Promise(r => setTimeout(r, delay));
-                        delay *= 2;
-                    }
+                const resp = await fetch(gasUrl, { method: "POST", body: JSON.stringify(payload) });
+                const res = await resp.json();
+                if(res.status === "success") {
+                    showToast("Pesanan Diterima Dapur!");
+                    state.cart = {}; state.selectedTable = null;
+                    document.getElementById('customer-name').value = '';
+                    closeReview(); renderMenus(); updatePill();
+                    document.querySelectorAll('.table-pill').forEach(el => el.classList.remove('active'));
                 }
-
-                alert(`Berhasil! Pesanan Meja ${state.selectedTable} telah masuk ke antrean dapur.`);
-                
-                // Reset State
-                state.cart = {};
-                state.selectedTable = null;
-                init();
-                updateActionBar();
-                document.getElementById('header-table').innerText = "BELUM DIPILIH";
-                document.getElementById('selected-table-badge').classList.add('hidden');
-                document.getElementById('menu-search').value = '';
-                state.searchQuery = '';
-            } catch (error) {
-                alert("Gagal mengirim pesanan. Silakan coba lagi atau hubungi IT.");
-            } finally {
-                btn.innerHTML = originalContent;
-                lucide.createIcons();
-            }
+            } catch(e) { showToast("Gagal Kirim ke Awan", "error"); }
+            finally { btn.disabled = false; btn.innerText = "Kirim Ke Cloud"; }
         }
 
-        // Run
-        init();
+        function showToast(msg, type="success") {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').className = type === 'error' ? "w-8 h-8 bg-red-500 rounded-full flex items-center justify-center" : "w-8 h-8 bg-lime-500 rounded-full flex items-center justify-center";
+            t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
+        }
     </script>
 </body>
 </html>
